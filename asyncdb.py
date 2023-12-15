@@ -332,7 +332,7 @@ async def __update_setting():
     global setting
     while True:
         try:
-            s = await get_list("oil_setting")
+            s = await get_list("settings")
             for i in s:
                 setting[i["name"]] = i["value"]
             await asyncio.sleep(5)

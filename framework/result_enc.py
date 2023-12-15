@@ -34,3 +34,10 @@ def suc_enclosure(obj):
         success=success_true_value,
         error_msg=result_value_success,
         code=success_code)
+
+
+def suc_enc(obj: dict):
+    obj[success_key] = success_true_value
+    obj[success_code_key] = success_code
+    obj[result_key_error_msg] = result_value_success
+    return obj
