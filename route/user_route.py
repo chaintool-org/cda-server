@@ -44,7 +44,9 @@ async def connect_tg(telegramId: str = None, org: str = None, nickname: str = No
     cda_user: CdaUser = await cda_user_dao.get_cda_user_by_connect_info(constants.CONNECT_TYPE_TELEGRAM, telegramId)
 
     if cda_user:
-        return cda_user.id
+        return suc_enc({
+            'cdaId': cda_user.id
+        })
 
     cda_user: CdaUser = CdaUser()
     cda_user.organization = org
