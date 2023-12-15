@@ -3,3 +3,6 @@
 # 1000-1999 公共错误
 SYSTEM_ERROR = 1000  # 系统错误
 REQUEST_PARAM_ILLEGAL = 1002  # 请求参数非法
+
+# 2000-2999 业务错误
+ORGANIZATION_NOT_EXIST = 2000  # 对应组织不存在
