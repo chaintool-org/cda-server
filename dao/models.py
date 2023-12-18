@@ -26,3 +26,37 @@ class CdaOrganization(BaseDbModel):
     @classmethod
     def table_name(cls):
         return "cda_organization"
+
+
+class CdaAddressOperation(BaseDbModel):
+    id = IntegerField(primary_key=True, auto_inc=True)
+    gmt_create = DateTimeField(auto_now=True)
+    gmt_modified = DateTimeField(auto_now=True)
+    cda_id = CharField(max_length=32)
+    nickname = CharField(max_length=128)
+    organization = CharField(max_length=128)
+    action_type = CharField(max_length=128)
+    data = JSONField()
+
+    @classmethod
+    def table_name(cls):
+        return "cda_address_operation"
+
+
+class CdaAddressReport(BaseDbModel):
+    id = IntegerField(primary_key=True, auto_inc=True)
+    gmt_create = DateTimeField(auto_now=True)
+    gmt_modified = DateTimeField(auto_now=True)
+    organization = CharField(max_length=128)
+    operate_id = CharField(max_length=64)
+    address = CharField(max_length=128)
+    network = CharField(max_length=32)
+    category = CharField(max_length=64)
+    confidence = CharField(max_length=128)
+    source = CharField(max_length=128)
+    entity = CharField(max_length=128)
+    is_public = IntegerField()
+
+    @classmethod
+    def table_name(cls):
+        return "cda_address_report"
