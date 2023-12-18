@@ -12,12 +12,12 @@ router = APIRouter()
 
 
 @router.get("/user/tg/get_id")
-async def get_cda_by_tg_id(telegramId: str = None):
-    if telegramId is None:
+async def get_cda_by_tg_id(tgId: str = None):
+    if tgId is None:
         raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'telegram id is not present')
 
     # 根据tgId查询用户
-    cda_user: CdaUser = await cda_user_dao.get_cda_user_by_connect_info(constants.CONNECT_TYPE_TELEGRAM, telegramId)
+    cda_user: CdaUser = await cda_user_dao.get_cda_user_by_connect_info(constants.CONNECT_TYPE_TELEGRAM, tgId)
 
     if not cda_user:
         return suc_enc({
@@ -30,8 +30,8 @@ async def get_cda_by_tg_id(telegramId: str = None):
 
 
 @router.post("/user/tg/connect")
-async def connect_tg(telegramId: str = None, org: str = None, nickname: str = None):
-    if telegramId is None:
+async def connect_tg(tgId: str = None, org: str = None, nickname: str = None):
+    if tgId is None:
         raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'telegram id is not present')
     if org is None:
         raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'org not present')
@@ -51,7 +51,7 @@ async def connect_tg(telegramId: str = None, org: str = None, nickname: str = No
     cda_user: CdaUser = CdaUser()
     cda_user.organization = org
     cda_user.connect_type = constants.CONNECT_TYPE_TELEGRAM
-    cda_user.connect_id = telegramId
+    cda_user.connect_id = tgId
     cda_user.nickname = nickname
     await cda_user.save()
 
