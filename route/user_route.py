@@ -41,7 +41,7 @@ async def connect_tg(tgId: str = None, org: str = None, nickname: str = None):
         raise BusinessException(errorcode.ORGANIZATION_NOT_EXIST, "organization not exist")
 
     # 判断tgid是否已存在
-    cda_user: CdaUser = await cda_user_dao.get_cda_user_by_connect_info(constants.CONNECT_TYPE_TELEGRAM, telegramId)
+    cda_user: CdaUser = await cda_user_dao.get_cda_user_by_connect_info(constants.CONNECT_TYPE_TELEGRAM, tgId)
 
     if cda_user:
         return suc_enc({
@@ -55,7 +55,7 @@ async def connect_tg(tgId: str = None, org: str = None, nickname: str = None):
     cda_user.nickname = nickname
     await cda_user.save()
 
-    saved_user = await cda_user_dao.get_cda_user_by_connect_info(constants.CONNECT_TYPE_TELEGRAM, telegramId)
+    saved_user = await cda_user_dao.get_cda_user_by_connect_info(constants.CONNECT_TYPE_TELEGRAM, tgId)
 
     return suc_enc({
         'cdaId': saved_user.id
