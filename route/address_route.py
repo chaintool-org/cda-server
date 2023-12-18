@@ -71,10 +71,10 @@ async def address_get_id(tgId: str = None, page: int = 1, size: int = 20):
     addreess = []
     list = await cda_address_operation_dao.cda_address_operation_id(cda_user.connect_id)
     if list is None:
-        return suc_enc({"address": addreess})
+        return suc_enc({"addresses": addreess})
 
     addreess = await cda_address_report_dao.list_cda_address_report(list, page, size)
-    return suc_enc({"address": addreess})
+    return suc_enc({"addresses": addreess})
 
 
 def make_cda_address_operation_data(cda_user: CdaUser, json_data: InputModel):
