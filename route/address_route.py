@@ -2,6 +2,7 @@ from datetime import datetime
 
 from fastapi import APIRouter, Request
 
+from asyncdb import transaction
 from dao import cda_user_dao, cda_address_operation_dao, cda_address_report_dao
 from dao.models import CdaUser, CdaAddressOperation, CdaAddressReport
 from framework import errorcode
@@ -31,6 +32,7 @@ async def get_config():
 
 
 @router.post("/address/report")
+@transaction
 async def report_address(json_data: InputModel):
     cda_user: CdaUser = await cda_user_dao.get_cda_user_by_connect_info(constants.CONNECT_TYPE_TELEGRAM,
                                                                         json_data.cdaId)
@@ -56,6 +58,23 @@ async def report_address(json_data: InputModel):
         make_cda_address_report_data(json_data.data, last_inserted_id, cda_user.organization))
 
     return suc_enc({})
+
+
+@router.get("/address/query")
+async def address_get_id(tgId: str = None, page: int = 1, size: int = 20):
+    cda_user: CdaUser = await cda_user_dao.get_cda_user_by_connect_info(constants.CONNECT_TYPE_TELEGRAM,
+                                                                        tgId)
+    # 判断cda_user为空时抛出异常
+    if cda_user is None:
+        raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'User does not exist!')
+
+    addreess = []
+    list = await cda_address_operation_dao.cda_address_operation_id(cda_user.connect_id)
+    if list is None:
+        return suc_enc({"address": addreess})
+
+    addreess = await cda_address_report_dao.list_cda_address_report(list, page, size)
+    return suc_enc({"address": addreess})
 
 
 def make_cda_address_operation_data(cda_user: CdaUser, json_data: InputModel):

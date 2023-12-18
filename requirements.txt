@@ -10,10 +10,8 @@ itsdangerous
 aioredis~=2.0.0
 aliyun-python-sdk-core-v3
 aiomysql~=0.0.21
-lxml~=4.6.3
 cacheout~=0.13.1
 requests-async~=0.6.2
-python-alipay-sdk~=3.0.4
 python-multipart
 pydantic~=1.8.2
 pytest~=6.2.5
