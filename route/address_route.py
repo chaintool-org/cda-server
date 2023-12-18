@@ -87,5 +87,4 @@ def make_cda_address_report_data(data_entry: list[DataEntry], operation_id: str,
             cda_address_report.is_public = item.public
             cda_address_report.address = address
             cda_address_list.append(cda_address_report)
-    print(cda_address_list)
     return cda_address_list
