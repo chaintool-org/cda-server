@@ -13,20 +13,28 @@ router = APIRouter()
 
 @router.get("/user/tg/get_id")
 async def get_cda_by_tg_id(tgId: str = None):
-    if tgId is None:
+    if tgId is None or tgId == '':
         raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'telegram id is not present')
 
     # 根据tgId查询用户
     cda_user: CdaUser = await cda_user_dao.get_cda_user_by_connect_info(constants.CONNECT_TYPE_TELEGRAM, tgId)
 
+    if cda_user:
+        if cda_user.status == 0:
+            return suc_enc({
+                'cdaId': cda_user.id
+            })
+        if cda_user.status == 1:
+            raise BusinessException(errorcode.USER_HAS_BEEN_DELETED,
+                                    'user has been deleted ,please contact administrator!')
+        if cda_user.status == 2:
+            raise BusinessException(errorcode.USER_HAS_BEEN_BANNED,
+                                    'user has been banned ,please contact administrator!')
+
     if not cda_user:
         return suc_enc({
             'orgs': await get_all_valid_organizations()
         })
-
-    return suc_enc({
-        'cdaId': cda_user.id
-    })
 
 
 @router.post("/user/tg/connect")
@@ -46,9 +54,16 @@ async def connect_tg(tgId: str = None, org: str = None, nickname: str = None):
     cda_user: CdaUser = await cda_user_dao.get_cda_user_by_connect_info(constants.CONNECT_TYPE_TELEGRAM, tgId)
 
     if cda_user:
-        return suc_enc({
-            'cdaId': cda_user.id
-        })
+        if cda_user.status == 0:
+            return suc_enc({
+                'cdaId': cda_user.id
+            })
+        if cda_user.status == 1:
+            raise BusinessException(errorcode.USER_HAS_BEEN_DELETED,
+                                    'user has been deleted ,please contact administrator!')
+        if cda_user.status == 2:
+            raise BusinessException(errorcode.USER_HAS_BEEN_BANNED,
+                                    'user has been banned ,please contact administrator!')
 
     cda_user: CdaUser = CdaUser()
     cda_user.organization = org
