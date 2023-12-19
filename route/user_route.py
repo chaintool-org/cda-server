@@ -13,7 +13,7 @@ router = APIRouter()
 
 @router.get("/user/tg/get_id")
 async def get_cda_by_tg_id(tgId: str = None):
-    if tgId is None:
+    if tgId is None or tgId == '':
         raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'telegram id is not present')
 
     # 根据tgId查询用户
