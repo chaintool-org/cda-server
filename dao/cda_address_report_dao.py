@@ -1,5 +1,6 @@
 import asyncdb
 from dao.models import CdaAddressReport
+from models import report_address_DTO
 
 
 async def inserts_cda_address_report(cda_address_report: list[CdaAddressReport]) -> CdaAddressReport:
@@ -15,6 +16,6 @@ async def list_cda_address_report(ids: list[str], page: int, size: int) -> list[
 
     relist = []
     for item in list:
-        relist.append(CdaAddressReport(**item))
+        relist.append(report_address_DTO.map_cda_address_report_to_dto(CdaAddressReport(**item)))
 
     return relist
