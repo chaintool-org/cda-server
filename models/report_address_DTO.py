@@ -8,7 +8,7 @@ class ReportAddressDTO:
         self.confidence = confidence
         self.source = source
         self.entity = entity
-        self.is_public = is_public
+        self.public = is_public
         self.gmt_create = gmt_create
         self.gmt_modified = gmt_modified
         self.id = id
