@@ -43,6 +43,8 @@ async def connect_tg(tgId: str = None, org: str = None, nickname: str = None):
         raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'telegram id is not present')
     if org is None or org == '':
         raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'org not present')
+    if nickname is None:
+        raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'nickname not present')
 
     ol = await get_all_valid_organizations()
     if org not in ol:

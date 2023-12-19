@@ -10,17 +10,28 @@ from framework.exceptions import BusinessException
 from models.report_address_model import InputModel, DataEntry
 
 from framework.result_enc import suc_enc
-from utils import constants
+from utils import constants, https_util, file_util
 from utils.file_util import get_json_data
 from utils.paramer_check import validate_param_in_list
 
 router = APIRouter()
 
-networks_file = "static/networks.json"
-categories_file = "static/categories.json"
+networks_file = "static/json/networks.json"
+categories_file = "static/json/categories.json"
+telegram_message_file = "static/html/telegram_message.html"
 
 networks = get_json_data(networks_file)
 categories = get_json_data(categories_file)
+telegram_message = file_util.get_file(telegram_message_file)
+
+# 发消息的testMode
+test_mode = ["dev", "test", "prod"]
+# 发送消息的token
+send_message_token = {
+    test_mode[0]: {"token": "6625991991:AAFcsMIP8w_crVQuWnk1Y5_YGM0SLBYh_XQ", "chat_id": "-4099496644"},
+    test_mode[1]: {"token": "6625991991:AAFcsMIP8w_crVQuWnk1Y5_YGM0SLBYh_XQ", "chat_id": "-4099496644"},
+    test_mode[2]: {"token": "6625991991:AAFcsMIP8w_crVQuWnk1Y5_YGM0SLBYh_XQ", "chat_id": "-4099496644"},
+}
 
 
 @router.get("/address/config")
@@ -34,11 +45,14 @@ async def get_config():
 @router.post("/address/report")
 @transaction
 async def report_address(json_data: InputModel):
-    cda_user: CdaUser = await cda_user_dao.get_cda_user_by_connect_info(constants.CONNECT_TYPE_TELEGRAM,
-                                                                        json_data.cdaId)
+    cda_user: CdaUser = await cda_user_dao.get_cda_user_by_id(constants.CONNECT_TYPE_TELEGRAM,
+                                                              json_data.cdaId)
     # 判断cda_user为空时抛出异常
     if cda_user is None:
         raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'User does not exist!')
+
+    if not validate_param_in_list(json_data.testMode, test_mode):
+        raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'testMode does not exist!')
 
     # 判断network是否在networks中
     for item in json_data.data:
@@ -57,23 +71,35 @@ async def report_address(json_data: InputModel):
     await cda_address_report_dao.inserts_cda_address_report(
         make_cda_address_report_data(json_data.data, last_inserted_id, cda_user.organization))
 
+    message = replace_placeholders(telegram_message, json_data.data[0],
+                                   cda_user.id, cda_user.organization,
+                                   cda_user.nickname,
+                                   f"https://www.baidu.com/{last_inserted_id}")
+    result = https_util.send_telegram_message(send_message_token[json_data.testMode]["token"],
+                                              send_message_token[json_data.testMode]["chat_id"],
+                                              message)
+    if result:
+        print("成功发送消息：", result)
+    else:
+        print("发送消息失败")
     return suc_enc({})
 
 
 @router.get("/address/query")
 async def address_get_id(tgId: str = None, page: int = 1, size: int = 20):
-    cda_user: CdaUser = await cda_user_dao.get_cda_user_by_connect_info(constants.CONNECT_TYPE_TELEGRAM,
-                                                                        tgId)
+    cda_user: CdaUser = await cda_user_dao.get_cda_user_by_id(constants.CONNECT_TYPE_TELEGRAM,
+                                                              tgId)
     # 判断cda_user为空时抛出异常
     if cda_user is None:
         raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'User does not exist!')
 
     addreess = []
-    list = await cda_address_operation_dao.cda_address_operation_id(cda_user.connect_id)
+    list = await cda_address_operation_dao.cda_address_operation_id(cda_user.id)
     if list is None:
         return suc_enc({"addresses": addreess})
 
     addreess = await cda_address_report_dao.list_cda_address_report(list, page, size)
+
     return suc_enc({"addresses": addreess})
 
 
@@ -81,7 +107,7 @@ def make_cda_address_operation_data(cda_user: CdaUser, json_data: InputModel):
     cda_address_operation = CdaAddressOperation()
     cda_address_operation.gmt_create = datetime.now()
     cda_address_operation.gmt_modified = datetime.now()
-    cda_address_operation.cda_id = cda_user.connect_id
+    cda_address_operation.cda_id = cda_user.id
     cda_address_operation.nickname = cda_user.nickname
     cda_address_operation.organization = cda_user.organization
     cda_address_operation.action_type = 'UPLOAD'
@@ -107,3 +133,19 @@ def make_cda_address_report_data(data_entry: list[DataEntry], operation_id: str,
             cda_address_report.address = address
             cda_address_list.append(cda_address_report)
     return cda_address_list
+
+
+def replace_placeholders(html_template, data: DataEntry, operation_id: str, organization: str, nick_name: str,
+                         detail_link: str):
+    # 替换占位符
+    html_content = html_template.format(
+        reporter=nick_name,
+        reporter_org=organization,
+        id=operation_id,
+        network=data.network,
+        category=data.category,
+        confidence=data.confidence,
+        addresses="\n".join([f"{i}. {addr}" for i, addr in enumerate(data.addresses, start=1)]),
+        detail_link=detail_link
+    )
+    return html_content

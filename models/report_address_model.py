@@ -6,12 +6,16 @@ from utils.paramer_check import validate_field_str, validate_field_list, validat
 
 
 class DataEntry(BaseModel):
+    # 必填
     network: Optional[str]
+    # 必填
     category: Optional[str]
     confidence: Optional[str]
     source: Optional[str]
     entity: Optional[str]
+    # 必填
     public: Optional[int]
+    # 必填
     addresses: Optional[List[str]]
 
     @validator("network", pre=True, always=True)
@@ -32,14 +36,16 @@ class DataEntry(BaseModel):
 
 
 class InputModel(BaseModel):
-    cdaId: Optional[str]
+    # 必填
+    cdaId: Optional[int]
     testMode: Optional[str] = "test"
+    # 必填
     data: Optional[List[DataEntry]]
 
     # cdaId类型对比
     @validator("cdaId", pre=True, always=True)
     def validate_cdaId(cls, value):
-        return validate_field_str(value, "cdaId")
+        return validate_field_int(value, "cdaId")
 
     # # data不能为空
     @validator("data", pre=True, always=True)
