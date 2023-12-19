@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 
 from fastapi import APIRouter, Request
@@ -10,7 +11,7 @@ from framework.exceptions import BusinessException
 from models.report_address_model import InputModel, DataEntry
 
 from framework.result_enc import suc_enc
-from utils import constants, https_util, file_util
+from utils import constants, https_util, file_util, paramer_check
 from utils.file_util import get_json_data
 from utils.paramer_check import validate_param_in_list
 
@@ -65,7 +66,7 @@ async def report_address(json_data: InputModel):
         if not validate_param_in_list(item.public, [0, 1]):
             raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'Public does not exist!')
 
-    operation_data = make_cda_address_operation_data(cda_user, json_data)
+    operation_data = make_cda_address_operation_data(cda_user, json_data.data)
     last_inserted_id = await cda_address_operation_dao.save_cda_address_operation(operation_data)
 
     await cda_address_report_dao.inserts_cda_address_report(
@@ -86,32 +87,52 @@ async def report_address(json_data: InputModel):
 
 
 @router.get("/address/query")
-async def address_get_id(tgId: str = None, page: int = 1, size: int = 20):
+@transaction
+async def address_get_id(cdaId: str = None, operateId: str = None, page: int = 1, size: int = 20):
+
+    if cdaId is None:
+        raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'cdaId does not exist!')
+
     cda_user: CdaUser = await cda_user_dao.get_cda_user_by_id(constants.CONNECT_TYPE_TELEGRAM,
-                                                              tgId)
+                                                              cdaId)
     # 判断cda_user为空时抛出异常
     if cda_user is None:
         raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'User does not exist!')
 
     addreess = []
-    list = await cda_address_operation_dao.cda_address_operation_id(cda_user.id)
-    if list is None:
-        return suc_enc({"addresses": addreess})
+    if operateId is not None:
+        await cda_address_operation_dao.save_cda_address_operation(
+            make_cda_address_operation_data(cda_user, json.dumps({
+                "cda_id": cdaId,
+                "operate_id": operateId
+            }), 'QUERY'))
+    # TODO 发现一个bug 传入operateId(12vvvvvvv)    sql会自动转为12 并且查询出数据不会报错
+        cda_address_operation = await cda_address_operation_dao.get_cda_address_operation_by_id(operateId)
+        if cda_address_operation is None:
+            raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'Operation does not exist!')
 
-    addreess = await cda_address_report_dao.list_cda_address_report(list, page, size)
+        addreess = await cda_address_report_dao.list_cda_address_report_by_operate_id(cda_address_operation.id, page,
+                                                                                      size)
+
+    else:
+        list = await cda_address_operation_dao.cda_address_operation_id(cda_user.id)
+        if list is None:
+            return suc_enc({"addresses": addreess})
+
+        addreess = await cda_address_report_dao.list_cda_address_report(list, page, size)
 
     return suc_enc({"addresses": addreess})
 
 
-def make_cda_address_operation_data(cda_user: CdaUser, json_data: InputModel):
+def make_cda_address_operation_data(cda_user: CdaUser, data, action_type: str = 'UPLOAD'):
     cda_address_operation = CdaAddressOperation()
     cda_address_operation.gmt_create = datetime.now()
     cda_address_operation.gmt_modified = datetime.now()
     cda_address_operation.cda_id = cda_user.id
     cda_address_operation.nickname = cda_user.nickname
     cda_address_operation.organization = cda_user.organization
-    cda_address_operation.action_type = 'UPLOAD'
-    cda_address_operation.data = json_data.json()
+    cda_address_operation.action_type = action_type
+    cda_address_operation.data = data
     return cda_address_operation
 
 
