@@ -1,5 +1,5 @@
 class ReportAddressDTO:
-    def __init__(self, organization, operate_id, address, network, category, confidence, source, entity, is_public):
+    def __init__(self, organization, operate_id, address, network, category, confidence, source, entity, is_public,gmt_create,gmt_modified,id):
         self.org = organization
         self.operate_id = operate_id
         self.address = address
@@ -9,6 +9,9 @@ class ReportAddressDTO:
         self.source = source
         self.entity = entity
         self.is_public = is_public
+        self.gmt_create = gmt_create
+        self.gmt_modified = gmt_modified
+        self.id = id
 
 
 def map_cda_address_report_to_dto(cda_address_report):
@@ -21,5 +24,8 @@ def map_cda_address_report_to_dto(cda_address_report):
         confidence=cda_address_report.confidence,
         source=cda_address_report.source,
         entity=cda_address_report.entity,
-        is_public=cda_address_report.is_public
+        is_public=cda_address_report.is_public,
+        gmt_create=cda_address_report.gmt_create,
+        gmt_modified=cda_address_report.gmt_modified,
+        id=cda_address_report.id
     )
