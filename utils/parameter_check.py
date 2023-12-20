@@ -46,9 +46,7 @@ def user_status_check(cda_user, is_return: bool = True):
     if cda_user:
         if is_return:
             if cda_user.status == 0:
-                return suc_enc({
-                    'cdaId': cda_user.id
-                })
+                return True
         if cda_user.status == 1:
             raise BusinessException(errorcode.USER_HAS_BEEN_DELETED,
                                     'user has been deleted ,please contact administrator!')

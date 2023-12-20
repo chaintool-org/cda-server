@@ -18,9 +18,10 @@ async def get_cda_by_tg_id(tgId: str = None):
 
     # 根据tgId查询用户
     cda_user: CdaUser = await cda_user_dao.get_cda_user_by_connect_info(constants.CONNECT_TYPE_TELEGRAM, tgId)
-
-    parameter_check.user_status_check(cda_user)
-
+    if True is parameter_check.user_status_check(cda_user):
+        return suc_enc({
+            'cdaId': cda_user.id
+        })
     if not cda_user:
         return suc_enc({
             'orgs': await get_all_valid_organizations()
@@ -33,7 +34,7 @@ async def connect_tg(tgId: str = None, org: str = None, nickname: str = None):
         raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'telegram id is not present')
     if org is None:
         raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'org not present')
-    if nickname is None:
+    if nickname is None or not nickname.strip():
         raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'nickname not present')
 
     ol = await get_all_valid_organizations()
@@ -43,7 +44,10 @@ async def connect_tg(tgId: str = None, org: str = None, nickname: str = None):
     # 判断tgid是否已存在
     cda_user: CdaUser = await cda_user_dao.get_cda_user_by_connect_info(constants.CONNECT_TYPE_TELEGRAM, tgId)
 
-    parameter_check.user_status_check(cda_user)
+    if True is parameter_check.user_status_check(cda_user):
+        return suc_enc({
+            'cdaId': cda_user.id
+        })
 
     cda_user: CdaUser = CdaUser()
     cda_user.organization = org
