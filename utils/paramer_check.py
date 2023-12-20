@@ -3,6 +3,7 @@ from framework.exceptions import BusinessException
 
 
 def validate_field_str(value, field_name: str):
+    print(f"type------{field_name}", type(value))
     if not value:
         raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, f"{field_name} is not present")
 
@@ -13,6 +14,7 @@ def validate_field_str(value, field_name: str):
 
 
 def validate_field_int(value, field_name: str):
+    print(f"type------{field_name}", type(value))
     if value is None:
         raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, f"{field_name} is not present")
 
@@ -23,6 +25,7 @@ def validate_field_int(value, field_name: str):
 
 
 def validate_field_list(value, field_name: str):
+    print(f"type------{field_name}", type(value))
     if not value:
         raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, f"{field_name} is not present")
 
