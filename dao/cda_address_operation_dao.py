@@ -1,3 +1,4 @@
+import asyncdb
 from asyncdb import sql_to_dict
 from dao.models import CdaAddressOperation
 
@@ -16,5 +17,6 @@ async def cda_address_operation_id(cda_id: str) -> list:
     return relist
 
 
-async def get_cda_address_operation_by_id(operation_id: int) -> CdaAddressOperation:
-    return await CdaAddressOperation.single('id = %s', operation_id)
+async def get_cda_address_operation_by_id(operation_id: str) -> CdaAddressOperation:
+    print(operation_id)
+    return await asyncdb.get_single(CdaAddressOperation.table_name(), 'id = %s', operation_id)
