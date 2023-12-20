@@ -3,6 +3,6 @@ FROM python:3.9-slim
 WORKDIR /opt/
 EXPOSE 8080
 COPY [".", "/opt/"]
-RUN   pip3 install -i https://mirrors.aliyun.com/pypi/simple/  -r requirements.txtz
+RUN   pip3 install -i https://mirrors.aliyun.com/pypi/simple/  -r requirements.txt
 #CMD   uvicorn server:app --port 8081 --host 0.0.0.0
 CMD python3 -u server.py
