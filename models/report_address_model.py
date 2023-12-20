@@ -2,10 +2,11 @@ from typing import List, Optional, Type
 
 from pydantic import BaseModel, validator
 
-from utils.paramer_check import validate_field_str, validate_field_list, validate_field_int
+from utils.parameter_check import validate_field_str, validate_field_list, validate_field_int
 
 
 class DataEntry(BaseModel):
+
     # 必填
     network: Optional[str]
     # 必填
