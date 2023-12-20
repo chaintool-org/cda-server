@@ -51,6 +51,7 @@ async def report_address(json_data: InputModel):
     # 判断cda_user为空时抛出异常
     if cda_user is None:
         raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'User does not exist!')
+    paramer_check.user_status_check(cda_user, False)
 
     if not validate_param_in_list(json_data.testMode, test_mode):
         raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'testMode does not exist!')
@@ -89,39 +90,41 @@ async def report_address(json_data: InputModel):
 @router.get("/address/query")
 @transaction
 async def address_get_id(cdaId: str = None, operateId: str = None, page: int = 1, size: int = 20):
-
-    if cdaId is None:
+    if cdaId is None or paramer_check.validate_input(cdaId) is False:
         raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'cdaId does not exist!')
 
     cda_user: CdaUser = await cda_user_dao.get_cda_user_by_id(constants.CONNECT_TYPE_TELEGRAM,
-                                                              cdaId)
+                                                                        cdaId)
     # 判断cda_user为空时抛出异常
     if cda_user is None:
         raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'User does not exist!')
+    paramer_check.user_status_check(cda_user, False)
 
-    addreess = []
+    addresses = []
     if operateId is not None:
+        # 判断是否是纯数字
+        if operateId.isdigit() is False:
+            raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'operateId does not exist!')
         await cda_address_operation_dao.save_cda_address_operation(
             make_cda_address_operation_data(cda_user, json.dumps({
                 "cda_id": cdaId,
                 "operate_id": operateId
             }), 'QUERY'))
-    # TODO 发现一个bug 传入operateId(12vvvvvvv)    sql会自动转为12 并且查询出数据不会报错
         cda_address_operation = await cda_address_operation_dao.get_cda_address_operation_by_id(operateId)
         if cda_address_operation is None:
             raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'Operation does not exist!')
 
-        addreess = await cda_address_report_dao.list_cda_address_report_by_operate_id(cda_address_operation.id, page,
-                                                                                      size)
+        addresses = await cda_address_report_dao.list_cda_address_report_by_operate_id(cda_address_operation.id, page,
+                                                                                       size)
 
     else:
         list = await cda_address_operation_dao.cda_address_operation_id(cda_user.id)
         if list is None:
-            return suc_enc({"addresses": addreess})
+            return suc_enc({"addresses": addresses})
 
-        addreess = await cda_address_report_dao.list_cda_address_report(list, page, size)
+        addresses = await cda_address_report_dao.list_cda_address_report(list, page, size)
 
-    return suc_enc({"addresses": addreess})
+    return suc_enc({"addresses": addresses})
 
 
 def make_cda_address_operation_data(cda_user: CdaUser, data, action_type: str = 'UPLOAD'):
