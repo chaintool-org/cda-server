@@ -174,7 +174,7 @@ def replace_placeholders(html_template, data: DataEntry, operation_id: str, orga
         network=data.network,
         category=data.category,
         confidence=data.confidence,
-        addresses="\n".join([f'{i}. <a href="www.baidu.com">{address}</a>' for i, address in enumerate(data.addresses, start=1)]),
+        addresses="\n".join([f'{i}. <code>{address}</code>' for i, address in enumerate(data.addresses, start=1)]),
         detail_link=detail_link
     )
     return html_content
