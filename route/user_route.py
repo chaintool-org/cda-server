@@ -30,7 +30,7 @@ async def get_cda_by_tg_id(tgId: str = None):
 
 @router.post("/user/tg/connect")
 async def connect_tg(tgId: str = None, org: str = None, nickname: str = None):
-    if tgId is None or parameter_check.validate_input(tgId) is False:
+    if tgId is None or not tgId.strip():
         raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'telegram id is not present')
     if org is None:
         raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'org not present')
