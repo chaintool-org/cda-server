@@ -28,9 +28,9 @@ categories = get_json_data(categories_file)
 telegram_message = file_util.get_file(telegram_message_file)
 
 # 发消息的testMode
-test_mode = json.loads(os.getenv('send.message.list', '["dev", "test", "prod"]'))
+test_mode = json.loads(os.getenv('SEND_MESSAGE_LIST', '["dev", "test", "prod"]'))
 # 发送消息的token
-send_message_token = json.loads(os.getenv('send.message.token',
+send_message_token = json.loads(os.getenv('END_MESSAGE_TOKEN',
                                           '{"dev": {"token": "6625991991:AAFcsMIP8w_crVQuWnk1Y5_YGM0SLBYh_XQ",'
                                           ' "chat_id": "-4099496644"},"test": {"token": '
                                           '"6625991991:AAFcsMIP8w_crVQuWnk1Y5_YGM0SLBYh_XQ", '

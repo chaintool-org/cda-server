@@ -29,16 +29,14 @@ def __parse_result_to_dict(parsed):
         connect_kwargs['port'] = parsed.port
 
     qs_args = parse_qsl(query, keep_blank_values=True)
-    for key, values in qs_args:
-        # 如果值列表只有一个元素，取第一个值
-        value = values[0] if len(values) == 1 else values
+    for key, value in qs_args:
         if value.lower() == 'false':
             value = False
         elif value.lower() == 'true':
             value = True
-        elif isinstance(value, str) and value.isdigit():
+        elif value.isdigit():
             value = int(value)
-        elif isinstance(value, str) and '.' in value and all(p.isdigit() for p in value.split('.', 1)):
+        elif '.' in value and all(p.isdigit() for p in value.split('.', 1)):
             try:
                 value = float(value)
             except ValueError:
