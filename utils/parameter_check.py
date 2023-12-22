@@ -46,9 +46,7 @@ def user_status_check(cda_user, is_return: bool = True):
     if cda_user:
         if is_return:
             if cda_user.status == 0:
-                return suc_enc({
-                    'cdaId': cda_user.id
-                })
+                return True
         if cda_user.status == 1:
             raise BusinessException(errorcode.USER_HAS_BEEN_DELETED,
                                     'user has been deleted ,please contact administrator!')
@@ -57,14 +55,7 @@ def user_status_check(cda_user, is_return: bool = True):
                                     'user has been banned ,please contact administrator!')
 
 
-def validate_input(input_str):
-    # 正则表达式，匹配纯数字、纯字母或数字与字母的组合
-    pattern = re.compile(r"^(?:(\d+)|([a-zA-Z]+)|(\d+[a-zA-Z]+|[a-zA-Z]+\d+))$")
-
-    # 进行匹配
-    match = pattern.match(input_str)
-
-    if match:
-        return True
-    else:
-        return False
+def validata_check_param(value, field_name: str):
+    if value is None or str(value).strip() is False:
+        raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, f"{field_name} is not present")
+    return value
