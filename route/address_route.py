@@ -52,36 +52,36 @@ async def get_config():
 @router.post("/address/report")
 @transaction
 async def report_address(json_data: InputModel):
-    cda_user: CdaUser = await cda_user_dao.get_cda_user_by_id(constants.CONNECT_TYPE_TELEGRAM, str(json_data.cdaId))
-    # 判断cda_user为空时抛出异常
-    if cda_user is None:
-        raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'User does not exist!')
-    parameter_check.user_status_check(cda_user, False)
-
-    if not validate_param_in_list(json_data.testMode, test_mode):
-        raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'testMode does not exist!')
-
-    # 判断network是否在networks中
-    for item in json_data.data:
-        if not validate_param_in_list(item.network, networks):
-            raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'Network does not exist!')
-
-        if not validate_param_in_list(item.category, categories):
-            raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'Category does not exist!')
-
-        if not validate_param_in_list(item.public, [0, 1]):
-            raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'Public does not exist!')
-
-    operation_data = make_cda_address_operation_data(cda_user, json_data.json())
-    last_inserted_id = await cda_address_operation_dao.save_cda_address_operation(operation_data)
-
-    await cda_address_report_dao.inserts_cda_address_report(
-        make_cda_address_report_data(json_data.data, last_inserted_id, cda_user.organization))
-
+    # cda_user: CdaUser = await cda_user_dao.get_cda_user_by_id(constants.CONNECT_TYPE_TELEGRAM, str(json_data.cdaId))
+    # # 判断cda_user为空时抛出异常
+    # if cda_user is None:
+    #     raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'User does not exist!')
+    # parameter_check.user_status_check(cda_user, False)
+    #
+    # if not validate_param_in_list(json_data.testMode, test_mode):
+    #     raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'testMode does not exist!')
+    #
+    # # 判断network是否在networks中
+    # for item in json_data.data:
+    #     if not validate_param_in_list(item.network, networks):
+    #         raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'Network does not exist!')
+    #
+    #     if not validate_param_in_list(item.public, [0, 1]):
+    #         raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'Public does not exist!')
+    #
+    # operation_data = make_cda_address_operation_data(cda_user, json_data.json())
+    # last_inserted_id = await cda_address_operation_dao.save_cda_address_operation(operation_data)
+    #
+    # await cda_address_report_dao.inserts_cda_address_report(
+    #     make_cda_address_report_data(json_data.data, last_inserted_id, cda_user.organization))
+    #
+    # message = replace_placeholders(telegram_message, json_data.data[0],
+    #                                cda_user.id, cda_user.organization,
+    #                                cda_user.nickname,
+    #                                f"https://www.baidu.com/{last_inserted_id}")
     message = replace_placeholders(telegram_message, json_data.data[0],
-                                   cda_user.id, cda_user.organization,
-                                   cda_user.nickname,
-                                   f"https://www.baidu.com/{last_inserted_id}")
+                                   3, "chaintool.ai",
+                                   "test")
     result = https_util.send_telegram_message(send_message_token[json_data.testMode]["token"],
                                               send_message_token[json_data.testMode]["chat_id"],
                                               message)
@@ -95,7 +95,7 @@ async def report_address(json_data: InputModel):
 @router.get("/address/query")
 @transaction
 async def address_get_id(cdaId: str = None, operateId: str = None, page: int = 1, size: int = 20):
-    if cdaId is None or cdaId.strip() is False:
+    if cdaId is None or cdaId.strip() is False or cdaId.isdigit() is False:
         raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'cdaId does not exist!')
 
     cda_user: CdaUser = await cda_user_dao.get_cda_user_by_id(constants.CONNECT_TYPE_TELEGRAM, cdaId)
@@ -164,8 +164,7 @@ def make_cda_address_report_data(data_entry: list[DataEntry], operation_id: str,
     return cda_address_list
 
 
-def replace_placeholders(html_template, data: DataEntry, operation_id: str, organization: str, nick_name: str,
-                         detail_link: str):
+def replace_placeholders(html_template, data: DataEntry, operation_id: str, organization: str, nick_name: str):
     # 替换占位符
     html_content = html_template.format(
         reporter=nick_name,
@@ -175,6 +174,5 @@ def replace_placeholders(html_template, data: DataEntry, operation_id: str, orga
         category=data.category,
         confidence=data.confidence,
         addresses="\n".join([f'{i}. <code>{address}</code>' for i, address in enumerate(data.addresses, start=1)]),
-        detail_link=detail_link
     )
     return html_content

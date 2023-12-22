@@ -6,4 +6,5 @@ async def get_cda_user_by_connect_info(connect_type: str, connect_id: str) -> Cd
 
 
 async def get_cda_user_by_id(connect_type: str, user_id: str) -> CdaUser:
+
     return await CdaUser.single('connect_type = %s and id = %s', connect_type, user_id)

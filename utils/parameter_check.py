@@ -54,3 +54,8 @@ def user_status_check(cda_user, is_return: bool = True):
             raise BusinessException(errorcode.USER_HAS_BEEN_BANNED,
                                     'user has been banned ,please contact administrator!')
 
+
+def validata_check_param(value, field_name: str):
+    if value is None or str(value).strip() is False:
+        raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, f"{field_name} is not present")
+    return value
