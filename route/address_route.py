@@ -52,36 +52,33 @@ async def get_config():
 @router.post("/address/report")
 @transaction
 async def report_address(json_data: InputModel):
-    # cda_user: CdaUser = await cda_user_dao.get_cda_user_by_id(constants.CONNECT_TYPE_TELEGRAM, str(json_data.cdaId))
+    cda_user: CdaUser = await cda_user_dao.get_cda_user_by_id(constants.CONNECT_TYPE_TELEGRAM, str(json_data.cdaId))
     # # 判断cda_user为空时抛出异常
-    # if cda_user is None:
-    #     raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'User does not exist!')
-    # parameter_check.user_status_check(cda_user, False)
-    #
-    # if not validate_param_in_list(json_data.testMode, test_mode):
-    #     raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'testMode does not exist!')
-    #
-    # # 判断network是否在networks中
-    # for item in json_data.data:
-    #     if not validate_param_in_list(item.network, networks):
-    #         raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'Network does not exist!')
-    #
-    #     if not validate_param_in_list(item.public, [0, 1]):
-    #         raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'Public does not exist!')
-    #
-    # operation_data = make_cda_address_operation_data(cda_user, json_data.json())
-    # last_inserted_id = await cda_address_operation_dao.save_cda_address_operation(operation_data)
-    #
-    # await cda_address_report_dao.inserts_cda_address_report(
-    #     make_cda_address_report_data(json_data.data, last_inserted_id, cda_user.organization))
-    #
-    # message = replace_placeholders(telegram_message, json_data.data[0],
-    #                                cda_user.id, cda_user.organization,
-    #                                cda_user.nickname,
-    #                                f"https://www.baidu.com/{last_inserted_id}")
+    if cda_user is None:
+        raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'User does not exist!')
+    parameter_check.user_status_check(cda_user, False)
+
+    if not validate_param_in_list(json_data.testMode, test_mode):
+        raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'testMode does not exist!')
+
+    # 判断network是否在networks中
+    for item in json_data.data:
+        if not validate_param_in_list(item.network, networks):
+            raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'Network does not exist!')
+
+        if not validate_param_in_list(item.public, [0, 1]):
+            raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'Public does not exist!')
+
+    operation_data = make_cda_address_operation_data(cda_user, json_data.json())
+    last_inserted_id = await cda_address_operation_dao.save_cda_address_operation(operation_data)
+
+    await cda_address_report_dao.inserts_cda_address_report(
+        make_cda_address_report_data(json_data.data, last_inserted_id, cda_user.organization))
+
     message = replace_placeholders(telegram_message, json_data.data[0],
-                                   3, "chaintool.ai",
-                                   "test")
+                                   cda_user.id, cda_user.organization,
+                                   cda_user.nickname)
+
     result = https_util.send_telegram_message(send_message_token[json_data.testMode]["token"],
                                               send_message_token[json_data.testMode]["chat_id"],
                                               message)
