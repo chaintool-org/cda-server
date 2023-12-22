@@ -1,3 +1,7 @@
+import datetime
+
+from cffi.backend_ctypes import long
+
 import asyncdb
 from dao.models import CdaAddressReport
 from models import report_address_DTO
@@ -27,6 +31,71 @@ async def list_cda_address_report_by_operate_id(operate_id: str, page: int, size
         f'order by gmt_create desc limit {size} offset {(page - 1) * size}'
     )
 
+    relist = []
+    for item in list:
+        relist.append(report_address_DTO.map_cda_address_report_to_dto(CdaAddressReport(**item)))
+
+    return relist
+
+
+async def get_test_cda_address_report_by_id(operate_id: str = None, ids: list[str] = None, mode: str = 'test',
+                                            page: int = 1,
+                                            size: int = 20) -> CdaAddressReport:
+    list = await asyncdb.sql_to_dict(
+        f'select * from cda_address_report '
+        f'where operate_id = "{operate_id}" '
+        f'or (operate_id is null and operate_id in ({asyncdb.get_sql_params_content_by_list(ids)})) '
+        f'order by gmt_create desc limit {size} offset {(page - 1) * size}'
+    )
+    relist = []
+    for item in list:
+        relist.append(report_address_DTO.map_cda_address_report_to_dto(CdaAddressReport(**item)))
+
+    return relist
+
+
+async def get_prod_cda_address_report_by_id(operate_id: int = None, ids: list[str] = None, mode: str = 'prod',
+                                            start_time: int = None, end_time: int = None, page: int = 1,
+                                            size: int = 20) -> CdaAddressReport:
+    start_sql = ''
+    end_sql = ''
+    operate_id_sql = ''
+    ids_sql = ''
+    mode_sql = ''
+    if start_time is not None:
+        start_sql = f'and gmt_create >= FROM_UNIXTIME({start_time // 1000})'
+    if end_time is not None:
+        end_sql = f'and gmt_create <= FROM_UNIXTIME({end_time // 1000})'
+    if operate_id is not None:
+        operate_id_sql = f'and operate_id = "{operate_id}"'
+    if ids is not None:
+        ids_sql = f'and operate_id in ({asyncdb.get_sql_params_content_by_list(ids)})'
+    if mode.strip():
+        mode_sql = f'mode = "{mode}"'
+    print(f'select * from cda_address_report '
+          f'where {operate_id_sql} '
+          f'{mode_sql} '
+          f'{start_sql} '
+          f'{end_sql} '
+          f'order by gmt_create desc limit {size} offset {(page - 1) * size}')
+    if ids is not None:
+        list = await asyncdb.sql_to_dict(
+            f'select * from cda_address_report '
+            f'where {mode_sql} '
+            f'{ids_sql} '
+            f'{start_sql} '
+            f'{end_sql} '
+            f'order by gmt_create desc limit {size} offset {(page - 1) * size}', *ids
+        )
+    else:
+        list = await asyncdb.sql_to_dict(
+            f'select * from cda_address_report '
+            f'where {mode_sql} '
+            f'{operate_id_sql} '
+            f'{start_sql} '
+            f'{end_sql} '
+            f'order by gmt_create desc limit {size} offset {(page - 1) * size}'
+        )
     relist = []
     for item in list:
         relist.append(report_address_DTO.map_cda_address_report_to_dto(CdaAddressReport(**item)))

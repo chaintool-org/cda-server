@@ -56,7 +56,7 @@ class CdaAddressReport(BaseDbModel):
     source = CharField(max_length=128)
     entity = CharField(max_length=128)
     is_public = IntegerField()
-
+    mode = CharField(max_length=16)
     @classmethod
     def table_name(cls):
         return "cda_address_report"

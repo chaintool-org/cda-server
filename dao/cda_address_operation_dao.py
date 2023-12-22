@@ -17,6 +17,6 @@ async def cda_address_operation_id(cda_id: str) -> list:
     return relist
 
 
-async def get_cda_address_operation_by_id(operation_id: str) -> CdaAddressOperation:
+async def get_cda_address_operation_by_id(operation_id: int) -> CdaAddressOperation:
     print(operation_id)
     return await asyncdb.get_single(CdaAddressOperation.table_name(), 'id = %s', operation_id)

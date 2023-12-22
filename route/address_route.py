@@ -1,8 +1,10 @@
 import json
 import os
+import time
 from datetime import datetime
 from typing import List
 
+from cffi.backend_ctypes import long
 from fastapi import APIRouter, Request
 
 from asyncdb import transaction
@@ -73,7 +75,7 @@ async def report_address(json_data: InputModel):
     last_inserted_id = await cda_address_operation_dao.save_cda_address_operation(operation_data)
 
     await cda_address_report_dao.inserts_cda_address_report(
-        make_cda_address_report_data(json_data.data, last_inserted_id, cda_user.organization))
+        make_cda_address_report_data(json_data.data, last_inserted_id, cda_user.organization, json_data.testMode))
 
     message = replace_placeholders(telegram_message, json_data.data[0],
                                    cda_user.id, cda_user.organization,
@@ -91,11 +93,50 @@ async def report_address(json_data: InputModel):
 
 @router.get("/address/query")
 @transaction
-async def address_get_id(cdaId: str = None, operateId: str = None, page: int = 1, size: int = 20):
+async def address_get_id(cdaId: str = None, operateId: str = None, startTime: str = None, endTime: str = None,
+                         testMode: str = None,
+                         page: str = None, size: str = None):
     if cdaId is None or cdaId.strip() is False or cdaId.isdigit() is False:
         raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'cdaId does not exist!')
 
+    if testMode is None:
+        testMode = test_mode[2]
+    else:
+        if not validate_param_in_list(testMode, test_mode):
+            raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'testMode does not exist!')
+
+    if startTime is not None:
+        if startTime.isdigit() is False:
+            raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'startTime error!')
+        if len(startTime) != 13:
+            raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'startTime length error!')
+    else:
+        startTime = 0000000000000
+    if endTime is not None:
+        if endTime.isdigit() is False:
+            raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'endTime error!')
+        if len(endTime) != 13:
+            raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'endTime length error!')
+    else:
+        endTime = int(time.time()) * 1000
+
+    if testMode is not None:
+        if testMode.strip() is False:
+            raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'testMode does not exist!')
+    else:
+        testMode = test_mode[2]
+    if page is not None and page.isdigit() is False:
+        raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'page Not a number!')
+    else:
+        page = 1
+    if size is not None:
+        if size.isdigit() is False:
+            raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'size Not a number!')
+    else:
+        size = 20
+
     cda_user: CdaUser = await cda_user_dao.get_cda_user_by_id(constants.CONNECT_TYPE_TELEGRAM, cdaId)
+
     # 判断cda_user为空时抛出异常
     if cda_user is None:
         raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'User does not exist!')
@@ -111,19 +152,28 @@ async def address_get_id(cdaId: str = None, operateId: str = None, page: int = 1
                 "cda_id": cdaId,
                 "operate_id": operateId
             }), 'QUERY'))
-        cda_address_operation = await cda_address_operation_dao.get_cda_address_operation_by_id(operateId)
+        cda_address_operation = await cda_address_operation_dao.get_cda_address_operation_by_id(int(operateId))
         if cda_address_operation is None:
             raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'Operation does not exist!')
 
-        addresses = await cda_address_report_dao.list_cda_address_report_by_operate_id(cda_address_operation.id, page,
-                                                                                       size)
+        addresses = await cda_address_report_dao.get_prod_cda_address_report_by_id(operate_id=cda_address_operation.id,
+                                                                                   page=int(page),
+                                                                                   size=int(size),
+                                                                                   mode=testMode,
+                                                                                   start_time=int(startTime),
+                                                                                   end_time=int(endTime))
 
     else:
         data = await cda_address_operation_dao.cda_address_operation_id(cda_user.id)
         if data is None:
             return suc_enc({"addresses": addresses})
 
-        addresses = await cda_address_report_dao.list_cda_address_report(data, page, size)
+        addresses = await cda_address_report_dao.get_prod_cda_address_report_by_id(ids=data,
+                                                                                   page=int(page),
+                                                                                   size=int(size),
+                                                                                   mode=testMode,
+                                                                                   start_time=int(startTime),
+                                                                                   end_time=int(endTime))
 
     return suc_enc({"addresses": addresses})
 
@@ -141,7 +191,7 @@ def make_cda_address_operation_data(cda_user: CdaUser, data,
     return cda_address_operation
 
 
-def make_cda_address_report_data(data_entry: list[DataEntry], operation_id: str, organization: str):
+def make_cda_address_report_data(data_entry: list[DataEntry], operation_id: str, organization: str, test_mode: str):
     cda_address_list = []
     for item in data_entry:
         for address in item.addresses:
@@ -157,6 +207,7 @@ def make_cda_address_report_data(data_entry: list[DataEntry], operation_id: str,
             cda_address_report.entity = item.entity
             cda_address_report.is_public = item.public
             cda_address_report.address = address
+            cda_address_report.mode = test_mode
             cda_address_list.append(cda_address_report)
     return cda_address_list
 
