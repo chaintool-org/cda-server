@@ -54,15 +54,3 @@ def user_status_check(cda_user, is_return: bool = True):
             raise BusinessException(errorcode.USER_HAS_BEEN_BANNED,
                                     'user has been banned ,please contact administrator!')
 
-
-def validate_input(input_str):
-    # 正则表达式，匹配纯数字、纯字母或数字与字母的组合
-    pattern = re.compile(r"^(?:(\d+)|([a-zA-Z]+)|(\d+[a-zA-Z]+|[a-zA-Z]+\d+))$")
-
-    # 进行匹配
-    match = pattern.match(input_str)
-
-    if match:
-        return True
-    else:
-        return False

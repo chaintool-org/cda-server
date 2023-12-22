@@ -95,7 +95,7 @@ async def report_address(json_data: InputModel):
 @router.get("/address/query")
 @transaction
 async def address_get_id(cdaId: str = None, operateId: str = None, page: int = 1, size: int = 20):
-    if cdaId is None or parameter_check.validate_input(cdaId) is False:
+    if cdaId is None or cdaId.strip() is False:
         raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'cdaId does not exist!')
 
     cda_user: CdaUser = await cda_user_dao.get_cda_user_by_id(constants.CONNECT_TYPE_TELEGRAM, cdaId)
