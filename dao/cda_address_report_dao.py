@@ -72,12 +72,7 @@ async def get_prod_cda_address_report_by_id(operate_id: int = None, ids: list[st
         ids_sql = f'and operate_id in ({asyncdb.get_sql_params_content_by_list(ids)})'
     if mode.strip():
         mode_sql = f'mode = "{mode}"'
-    print(f'select * from cda_address_report '
-          f'where {operate_id_sql} '
-          f'{mode_sql} '
-          f'{start_sql} '
-          f'{end_sql} '
-          f'order by gmt_create desc limit {size} offset {(page - 1) * size}')
+
     if ids is not None:
         list = await asyncdb.sql_to_dict(
             f'select * from cda_address_report '
