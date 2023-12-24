@@ -211,8 +211,7 @@ def make_cda_address_report_data(data_entry: list[DataEntry], operation_id: str,
     return cda_address_list
 
 
-def replace_placeholders(html_template, data: DataEntry, operation_id: str, organization: str, nick_name: str,
-                         source: str):
+def replace_placeholders(html_template, data: DataEntry, operation_id: str, organization: str, nick_name: str):
     # 替换占位符
     html_content = html_template.format(
         reporter=nick_name,
