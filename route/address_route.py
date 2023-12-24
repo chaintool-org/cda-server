@@ -221,6 +221,7 @@ def replace_placeholders(html_template, data: DataEntry, operation_id: str, orga
         category=data.category,
         confidence=data.confidence,
         source=data.source,
+        entity=data.entity,
         addresses="\n".join([f'{i}. <code>{address}</code>' for i, address in enumerate(data.addresses, start=1)]),
     )
     return html_content
