@@ -82,7 +82,7 @@ async def report_address(json_data: InputModel):
                                    cda_user.nickname)
 
     result = https_util.send_telegram_message(send_message_token[json_data.testMode]["token"],
-                                              send_message_token[json_data.testMode]["chat_id"])
+                                              send_message_token[json_data.testMode]["chat_id"],message)
     if result:
         print("成功发送消息：", result)
     else:
