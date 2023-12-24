@@ -79,11 +79,10 @@ async def report_address(json_data: InputModel):
 
     message = replace_placeholders(telegram_message, json_data.data[0],
                                    cda_user.id, cda_user.organization,
-                                   cda_user.nickname)
+                                   cda_user.nickname, json_data.source)
 
     result = https_util.send_telegram_message(send_message_token[json_data.testMode]["token"],
-                                              send_message_token[json_data.testMode]["chat_id"],
-                                              message)
+                                              send_message_token[json_data.testMode]["chat_id"])
     if result:
         print("成功发送消息：", result)
     else:
@@ -212,7 +211,8 @@ def make_cda_address_report_data(data_entry: list[DataEntry], operation_id: str,
     return cda_address_list
 
 
-def replace_placeholders(html_template, data: DataEntry, operation_id: str, organization: str, nick_name: str):
+def replace_placeholders(html_template, data: DataEntry, operation_id: str, organization: str, nick_name: str,
+                         source: str):
     # 替换占位符
     html_content = html_template.format(
         reporter=nick_name,
@@ -221,6 +221,7 @@ def replace_placeholders(html_template, data: DataEntry, operation_id: str, orga
         network=data.network,
         category=data.category,
         confidence=data.confidence,
+        source=source,
         addresses="\n".join([f'{i}. <code>{address}</code>' for i, address in enumerate(data.addresses, start=1)]),
     )
     return html_content
