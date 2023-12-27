@@ -17,6 +17,7 @@ pydantic~=1.8.2
 pytest~=6.2.5
 requests~=2.26.0
 starlette~=0.14.2
+pandas~=2.1.4
 # The following packages are considered to be unsafe in a requirements file:
 # pip
 # setuptools

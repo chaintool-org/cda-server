@@ -96,3 +96,9 @@ async def get_prod_cda_address_report_by_id(operate_id: int = None, ids: list[st
         relist.append(report_address_DTO.map_cda_address_report_to_dto(CdaAddressReport(**item)))
 
     return relist
+
+
+async def get_report_list_by_dt(startDt: str, endDt: str):
+    return await asyncdb.sql_to_dict(
+        'select gmt_create as timestamp ,id as record_id,network,source,confidence,address,category,entity,organization as provider_org from cda_address_report where gmt_create >= %s and gmt_create <%s',
+        startDt, endDt)

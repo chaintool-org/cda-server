@@ -1,11 +1,15 @@
+import csv
 import json
 import os
 import time
 from datetime import datetime
 from typing import List
+import pandas
 
 from cffi.backend_ctypes import long
-from fastapi import APIRouter, Request
+from fastapi import APIRouter
+from fastapi.responses import StreamingResponse
+from starlette.responses import FileResponse, Response
 
 from asyncdb import transaction
 from dao import cda_user_dao, cda_address_operation_dao, cda_address_report_dao
@@ -18,6 +22,7 @@ from framework.result_enc import suc_enc
 from utils import constants, https_util, file_util, parameter_check
 from utils.file_util import get_json_data
 from utils.parameter_check import validate_param_in_list
+import io
 
 router = APIRouter()
 
@@ -82,7 +87,7 @@ async def report_address(json_data: InputModel):
                                    cda_user.nickname)
 
     result = https_util.send_telegram_message(send_message_token[json_data.testMode]["token"],
-                                              send_message_token[json_data.testMode]["chat_id"],message)
+                                              send_message_token[json_data.testMode]["chat_id"], message)
     if result:
         print("成功发送消息：", result)
     else:
@@ -225,3 +230,27 @@ def replace_placeholders(html_template, data: DataEntry, operation_id: str, orga
         addresses="\n".join([f'{i}. <code>{address}</code>' for i, address in enumerate(data.addresses, start=1)]),
     )
     return html_content
+
+
+@router.get("/address/download")
+async def download_csv(startDt: str, endDt: str):
+    data = await cda_address_report_dao.get_report_list_by_dt(startDt, endDt)
+    rows = []
+    for row in data:
+        row_d = {'timestamp': row.get('timestamp'), 'record_id': row.get('record_id'),
+                 'network': await parse_none_value(row.get('network')),
+                 'source': await parse_none_value(row.get('source')),
+                 'confidence': await parse_none_value(row.get('confidence')),
+                 'category': await parse_none_value(row.get('category')),
+                 'entity': await parse_none_value(row.get('entity')),
+                 'provider_org': await parse_none_value(row.get('provider_org'))}
+        rows.append(row_d)
+    df = pandas.DataFrame(rows)
+    headers = {'Content-Disposition': 'attachment; filename="data.csv"'}
+    return Response(df.to_csv(), headers=headers, media_type="text/csv")
+
+
+async def parse_none_value(param: str):
+    if param is None or len(param) == 0 or param.isspace():
+        return 'None'
+    return param
