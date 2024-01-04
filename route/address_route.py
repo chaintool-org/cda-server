@@ -238,6 +238,7 @@ async def download_csv(startDt: str, endDt: str):
     rows = []
     for row in data:
         row_d = {'timestamp': row.get('timestamp'), 'record_id': row.get('record_id'),
+                 'address': row.get('address'),
                  'network': await parse_none_value(row.get('network')),
                  'source': await parse_none_value(row.get('source')),
                  'confidence': await parse_none_value(row.get('confidence')),
