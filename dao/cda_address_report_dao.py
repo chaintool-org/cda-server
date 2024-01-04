@@ -98,10 +98,10 @@ async def get_prod_cda_address_report_by_id(operate_id: int = None, ids: list[st
     return relist
 
 
-async def get_report_list_by_dt(startDt: str, endDt: str):
+async def get_report_list_by_dt(startDt: str, endDt: str, testMode: str):
     return await asyncdb.sql_to_dict(
         f'select a.gmt_create as timestamp ,a.id as record_id,a.network,a.source,a.confidence,a.address,a.category,a.entity,a.organization,'
         f'a.is_public as public,a.organization as provider_org, c.nickname as nickname '
         f'from cda_address_report as a left join cda_address_operation as b on a.operate_id = b.id left join cda_users as c on b.cda_id = c.id '
-        f'where a.gmt_create >= %s and a.gmt_create <%s',
-        startDt, endDt)
+        f'where a.gmt_create >= %s and a.gmt_create <%s and mode = %s',
+        startDt, endDt, testMode)

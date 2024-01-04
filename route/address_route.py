@@ -233,8 +233,10 @@ def replace_placeholders(html_template, data: DataEntry, operation_id: str, orga
 
 
 @router.get("/address/download")
-async def download_csv(startDt: str, endDt: str):
-    data = await cda_address_report_dao.get_report_list_by_dt(startDt, endDt)
+async def download_csv(startDt: str, endDt: str, testMode: str = None):
+    if testMode is None:
+        testMode = 'prod'
+    data = await cda_address_report_dao.get_report_list_by_dt(startDt, endDt, testMode)
     rows = []
     for row in data:
         row_d = {'timestamp': row.get('timestamp'), 'record_id': row.get('record_id'),
