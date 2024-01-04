@@ -244,7 +244,10 @@ async def download_csv(startDt: str, endDt: str):
                  'confidence': await parse_none_value(row.get('confidence')),
                  'category': await parse_none_value(row.get('category')),
                  'entity': await parse_none_value(row.get('entity')),
-                 'provider_org': await parse_none_value(row.get('provider_org'))}
+                 'provider_org': await parse_none_value(row.get('provider_org')),
+                 'public': row.get('public') > 0 if 'TRUE' else 'FALSE',
+                 'nickname': row.get('nickname')
+                 }
         rows.append(row_d)
     df = pandas.DataFrame(rows)
     headers = {'Content-Disposition': 'attachment; filename="data.csv"'}
