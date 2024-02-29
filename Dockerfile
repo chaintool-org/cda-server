@@ -2,8 +2,11 @@ FROM python:3.9-slim
 #RUN mkdir /opt
 WORKDIR /opt/
 EXPOSE 8080
-COPY [".", "/opt/"]
+# 将 requirements.txt 复制到 /opt/ 目录
+COPY ["requirements.txt", "/opt/"]
 RUN pip3 install flask --index-url=http://192.168.31.52:11180/repository/pypi-group/simple -r requirements.txt --trusted-host=192.168.31.52
+# 将其余文件复制到 /opt/ 目录
+COPY [".", "/opt/"]
 #CMD   uvicorn server:app --port 8081 --host 0.0.0.0
 ENV ms.db.url mysql://root:W1PkWn2hfOAy@172.27.240.4:3306/cda_db?useSSL=false&useUnicode=true&characterEncoding=UTF-8
 ENV send.message.list ["dev", "test", "prod"]
