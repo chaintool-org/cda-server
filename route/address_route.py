@@ -86,6 +86,8 @@ async def report_address(json_data: InputModel):
                                    cda_user.id, cda_user.organization,
                                    cda_user.nickname)
 
+    print(message)
+
     result = https_util.send_telegram_message(send_message_token[json_data.testMode]["token"],
                                               send_message_token[json_data.testMode]["chat_id"], message)
     if result:
@@ -225,6 +227,7 @@ def replace_placeholders(html_template, data: DataEntry, operation_id: str, orga
         network=data.network,
         category=data.category,
         confidence=data.confidence,
+        public='Yes' if data.public == 0 else 'No',
         source=data.source,
         entity=data.entity,
         addresses="\n".join([f'{i}. <code>{address}</code>' for i, address in enumerate(data.addresses, start=1)]),
