@@ -86,8 +86,6 @@ async def report_address(json_data: InputModel):
                                    cda_user.id, cda_user.organization,
                                    cda_user.nickname)
 
-    print(message)
-
     result = https_util.send_telegram_message(send_message_token[json_data.testMode]["token"],
                                               send_message_token[json_data.testMode]["chat_id"], message)
     if result:
