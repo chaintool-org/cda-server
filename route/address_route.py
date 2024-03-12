@@ -225,7 +225,7 @@ def replace_placeholders(html_template, data: DataEntry, operation_id: str, orga
         network=data.network,
         category=data.category,
         confidence=data.confidence,
-        public='Yes' if data.public == 0 else 'No',
+        public='No' if data.public == 0 else 'Yes',
         source=data.source,
         entity=data.entity,
         addresses="\n".join([f'{i}. <code>{address}</code>' for i, address in enumerate(data.addresses, start=1)]),
