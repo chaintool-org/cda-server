@@ -10,6 +10,7 @@ from cffi.backend_ctypes import long
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 from starlette.responses import FileResponse, Response
+from telegram import Bot
 
 from asyncdb import transaction
 from dao import cda_user_dao, cda_address_operation_dao, cda_address_report_dao
@@ -38,12 +39,12 @@ telegram_message = file_util.get_file(telegram_message_file)
 test_mode = json.loads(os.getenv('SEND_MESSAGE_LIST', '["dev", "test", "prod"]'))
 # 发送消息的token
 send_message_token = json.loads(os.getenv('SEND_MESSAGE_TOKEN',
-                                          '{"dev": {"token": "6625991991:AAFcsMIP8w_crVQuWnk1Y5_YGM0SLBYh_XQ",'
-                                          ' "chat_id": "-4099496644"},"test": {"token": '
-                                          '"6625991991:AAFcsMIP8w_crVQuWnk1Y5_YGM0SLBYh_XQ", '
-                                          '"chat_id": "-4099496644"},"prod": '
-                                          '{"token": "6472718374:AAEsaQ8pPinVDeR27S0a07G7XR03CYuCEio", '
-                                          '"chat_id": "-4005964363"}}'))
+                                          '{"dev": {"token": "6719660314:AAHnyhfgS6An6Ff2RcjT679xPWLhgSXfseo",'
+                                          ' "chat_id": "-1002111465087"},'
+                                          '"test": {"token": "6719660314:AAHnyhfgS6An6Ff2RcjT679xPWLhgSXfseo",'
+                                          ' "chat_id": "-1002111465087"},'
+                                          '"prod": {"token": "6566268578:AAGc4sGBLHlIpCBBtUBCJDVu4fzP5IdhUeg", '
+                                          '"chat_id": "-1001280903433"} }'))
 
 
 @router.get("/address/config")
@@ -82,9 +83,12 @@ async def report_address(json_data: InputModel):
     await cda_address_report_dao.inserts_cda_address_report(
         make_cda_address_report_data(json_data.data, last_inserted_id, cda_user.organization, json_data.testMode))
 
+    char_member_result = https_util.get_telegram_chat_member(send_message_token[json_data.testMode]["token"],
+                                                             send_message_token[json_data.testMode]["chat_id"],
+                                                             cda_user.connect_id)
     message = replace_placeholders(telegram_message, json_data.data[0],
                                    cda_user.id, cda_user.organization,
-                                   cda_user.nickname)
+                                   cda_user.nickname, char_member_result['result']['user']['username'])
 
     result = https_util.send_telegram_message(send_message_token[json_data.testMode]["token"],
                                               send_message_token[json_data.testMode]["chat_id"], message)
@@ -216,10 +220,11 @@ def make_cda_address_report_data(data_entry: list[DataEntry], operation_id: str,
     return cda_address_list
 
 
-def replace_placeholders(html_template, data: DataEntry, operation_id: str, organization: str, nick_name: str):
+def replace_placeholders(html_template, data: DataEntry, operation_id: str, organization: str, nick_name: str,
+                         tg_user_nick_name: str):
     # 替换占位符
     html_content = html_template.format(
-        nickname=data.nickname,
+        nickname=tg_user_nick_name,
         reporter=nick_name,
         reporter_org=organization,
         id=operation_id,
