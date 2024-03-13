@@ -10,7 +10,6 @@ from cffi.backend_ctypes import long
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 from starlette.responses import FileResponse, Response
-from telegram import Bot
 
 from asyncdb import transaction
 from dao import cda_user_dao, cda_address_operation_dao, cda_address_report_dao
