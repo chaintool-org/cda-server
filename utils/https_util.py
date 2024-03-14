@@ -9,7 +9,8 @@ def send_telegram_message(bot_token, chat_id, message_text):
         "chat_id": chat_id,
         "text": message_text,
         "parse_mode": "HTML",
-        "pin_message": "true"
+        "pin_message": "true",
+        "link_preview_options": '{"is_disabled":true}'
     }
 
     # 构建请求
