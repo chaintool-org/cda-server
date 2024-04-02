@@ -12,7 +12,7 @@ from fastapi.responses import StreamingResponse
 from starlette.responses import FileResponse, Response
 
 from asyncdb import transaction
-from dao import cda_user_dao, cda_address_operation_dao, cda_address_report_dao
+from dao import cda_user_dao, cda_address_operation_dao, cda_address_report_dao, cda_network_dao
 from dao.models import CdaUser, CdaAddressOperation, CdaAddressReport
 from framework import errorcode
 from framework.exceptions import BusinessException
@@ -26,11 +26,11 @@ import io
 
 router = APIRouter()
 
-networks_file = "static/json/networks.json"
+# networks_file = "static/json/networks.json"
 categories_file = "static/json/categories.json"
 telegram_message_file = "static/html/telegram_message.html"
 
-networks = get_json_data(networks_file)
+# networks = get_json_data(networks_file)
 categories = get_json_data(categories_file)
 telegram_message = file_util.get_file(telegram_message_file)
 
@@ -50,6 +50,7 @@ send_message_token = json.loads(os.getenv('SEND_MESSAGE_TOKEN',
 async def get_config():
     print(test_mode)
     print(send_message_token)
+    networks = await cda_network_dao.get_all_valid_networks()
     return suc_enc({
         "networks": networks,
         "categories": categories
@@ -68,6 +69,7 @@ async def report_address(json_data: InputModel):
     if not validate_param_in_list(json_data.testMode, test_mode):
         raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'testMode does not exist!')
 
+    networks = await cda_network_dao.get_all_valid_networks()
     # 判断network是否在networks中
     for item in json_data.data:
         if not validate_param_in_list(item.network, networks):

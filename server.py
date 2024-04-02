@@ -25,7 +25,7 @@ from starlette.responses import Response
 
 import setting
 from framework.exceptions import BusinessException
-from route import test, user_route, address_route
+from route import test, user_route, address_route, system_route
 
 app = FastAPI()
 
@@ -68,6 +68,7 @@ app.add_middleware(SessionMiddleware, secret_key=setting.cookie_key)
 app.include_router(test.router, prefix="")
 app.include_router(user_route.router, prefix="")
 app.include_router(address_route.router, prefix="")
+app.include_router(system_route.router, prefix="")
 
 
 @app.get("/", response_class=PlainTextResponse)
