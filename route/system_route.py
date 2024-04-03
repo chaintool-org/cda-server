@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 from asyncdb import transaction
 from dao import cda_organization_dao, org_change_history, cda_network_dao, network_change_history
+from framework import errorcode
 from framework.exceptions import BusinessException
 from framework.result_enc import suc_enc
 from models.system_change_model import OrgEntity, NetworkEntity
@@ -14,7 +15,7 @@ router = APIRouter()
 async def add_org(data: OrgEntity):
     cda_organization = await cda_organization_dao.lock_organizations(data.org)
     if cda_organization is not None:
-        raise BusinessException("The organization already exists")
+        raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL,"The organization already exists")
     # 添加操作记录
     await org_change_history.add_history(data, 0)
     # 添加org
@@ -29,7 +30,7 @@ async def add_org(data: OrgEntity):
 async def add_org(data: OrgEntity):
     cda_organization = await cda_organization_dao.lock_organizations(data.org)
     if cda_organization is None:
-        raise BusinessException("This organization does not exist")
+        raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL,"This organization does not exist")
     # 添加操作记录
     await org_change_history.add_history(data, 1)
     # 删除org
@@ -45,7 +46,7 @@ async def add_org(data: OrgEntity):
 async def add_org(data: NetworkEntity):
     cda_network = await cda_network_dao.lock_network(data.network)
     if cda_network is not None:
-        raise BusinessException("The network already exists")
+        raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL,"The network already exists")
     # 添加操作记录
     await network_change_history.add_history(data, 0)
     # 添加network
@@ -60,7 +61,7 @@ async def add_org(data: NetworkEntity):
 async def add_org(data: NetworkEntity):
     cda_network = await cda_network_dao.lock_network(data.network)
     if cda_network is None:
-        raise BusinessException("This network does not exist")
+        raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL,"This network does not exist")
     # 添加操作记录
     await network_change_history.add_history(data, 1)
     # 删除network
