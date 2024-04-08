@@ -20,12 +20,14 @@ from fastapi import FastAPI, Request
 from fastapi.responses import PlainTextResponse
 from fastapi.responses import JSONResponse
 from starlette.middleware.cors import CORSMiddleware
+from starlette.middleware.errors import ServerErrorMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.responses import Response
 
 import setting
 from framework.exceptions import BusinessException
-from route import test, user_route, address_route
+from route import test, user_route, address_route, system_route
+from utils import lark_notice_util
 
 app = FastAPI()
 
@@ -40,6 +42,12 @@ async def business_exception_handler(request: Request, exc: BusinessException):
     }
     traceback.print_exc()
     return JSONResponse(status_code=200, content=dct)
+
+
+# 异常处理器2：处理所有异常
+async def catch_all_exception_handler(request, exc):
+    await lark_notice_util.make_error_notice(traceback.format_exc())
+    return JSONResponse(status_code=500, content={"errorMessage": "Internal Server Error"})
 
 
 @app.middleware("http")
@@ -63,11 +71,13 @@ async def log_request(request, call_next):
     print(body)
     return ret
 
-
+# 添加 ServerErrorMiddleware，传入全局异常处理器
+app.add_middleware(ServerErrorMiddleware, handler=catch_all_exception_handler)
 app.add_middleware(SessionMiddleware, secret_key=setting.cookie_key)
 app.include_router(test.router, prefix="")
 app.include_router(user_route.router, prefix="")
 app.include_router(address_route.router, prefix="")
+app.include_router(system_route.router, prefix="")
 
 
 @app.get("/", response_class=PlainTextResponse)

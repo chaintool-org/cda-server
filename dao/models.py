@@ -57,6 +57,45 @@ class CdaAddressReport(BaseDbModel):
     entity = CharField(max_length=128)
     is_public = IntegerField()
     mode = CharField(max_length=16)
+
     @classmethod
     def table_name(cls):
         return "cda_address_report"
+
+
+class OrgChangeHistory(BaseDbModel):
+    id = IntegerField(primary_key=True, auto_inc=True)
+    gmt_create = DateTimeField(auto_now=True)
+    gmt_modified = DateTimeField(auto_now=True)
+    organization = CharField(max_length=32)
+    lark_user_name = CharField(max_length=32)
+    status = IntegerField()
+
+    @classmethod
+    def table_name(cls):
+        return "org_change_history"
+
+
+class CdaNetwork(BaseDbModel):
+    id = IntegerField(primary_key=True, auto_inc=True)
+    gmt_create = DateTimeField(auto_now=True)
+    gmt_modified = DateTimeField(auto_now=True)
+    network = CharField(max_length=32)
+    status = IntegerField()
+
+    @classmethod
+    def table_name(cls):
+        return "cda_network"
+
+
+class NetworkChangeHistory(BaseDbModel):
+    id = IntegerField(primary_key=True, auto_inc=True)
+    gmt_create = DateTimeField(auto_now=True)
+    gmt_modified = DateTimeField(auto_now=True)
+    network = CharField(max_length=32)
+    lark_user_name = CharField(max_length=32)
+    status = IntegerField()
+
+    @classmethod
+    def table_name(cls):
+        return "network_change_history"
