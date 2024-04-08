@@ -1,3 +1,5 @@
+import json
+
 from fastapi import APIRouter
 
 from asyncdb import transaction
@@ -15,11 +17,12 @@ router = APIRouter()
 async def add_org(data: OrgEntity):
     cda_organization = await cda_organization_dao.lock_organizations(data.org)
     if cda_organization is not None:
-        raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL,"The organization already exists")
+        raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, "The organization already exists")
     # 添加操作记录
     await org_change_history.add_history(data, 0)
     # 添加org
     await cda_organization_dao.add_organization(data.org)
+
     return suc_enc({
         'data': "添加成功👌"
     })
@@ -30,7 +33,7 @@ async def add_org(data: OrgEntity):
 async def add_org(data: OrgEntity):
     cda_organization = await cda_organization_dao.lock_organizations(data.org)
     if cda_organization is None:
-        raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL,"This organization does not exist")
+        raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, "This organization does not exist")
     # 添加操作记录
     await org_change_history.add_history(data, 1)
     # 删除org
@@ -46,7 +49,7 @@ async def add_org(data: OrgEntity):
 async def add_org(data: NetworkEntity):
     cda_network = await cda_network_dao.lock_network(data.network)
     if cda_network is not None:
-        raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL,"The network already exists")
+        raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, "The network already exists")
     # 添加操作记录
     await network_change_history.add_history(data, 0)
     # 添加network
@@ -61,7 +64,7 @@ async def add_org(data: NetworkEntity):
 async def add_org(data: NetworkEntity):
     cda_network = await cda_network_dao.lock_network(data.network)
     if cda_network is None:
-        raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL,"This network does not exist")
+        raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, "This network does not exist")
     # 添加操作记录
     await network_change_history.add_history(data, 1)
     # 删除network
@@ -70,4 +73,3 @@ async def add_org(data: NetworkEntity):
     return suc_enc({
         'data': "删除成功👌"
     })
-
