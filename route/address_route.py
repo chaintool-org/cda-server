@@ -87,9 +87,14 @@ async def report_address(json_data: InputModel):
     char_member_result = https_util.get_telegram_chat_member(send_message_token[json_data.testMode]["token"],
                                                              send_message_token[json_data.testMode]["chat_id"],
                                                              cda_user.connect_id)
+    tg_user_name = ""
+    if char_member_result is not None:
+        if char_member_result['result'] is not None and char_member_result['result']['user'] is not None and \
+                char_member_result['result']['user']['username'] is not None:
+            tg_user_name = char_member_result['result']['user']['username']
     message = replace_placeholders(telegram_message, json_data.data[0],
                                    cda_user.id, cda_user.organization,
-                                   cda_user.nickname, char_member_result['result']['user']['username'])
+                                   cda_user.nickname, tg_user_name)
 
     result = https_util.send_telegram_message(send_message_token[json_data.testMode]["token"],
                                               send_message_token[json_data.testMode]["chat_id"], message)

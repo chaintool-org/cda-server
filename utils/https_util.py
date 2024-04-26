@@ -43,6 +43,7 @@ def get_telegram_chat_member(bot_token, chat_id, user_id):
 
     # 检查响应状态码
     if response.status_code == 200:
+        print("获取跟用户聊天的用户信息",response.json())
         # 如果响应内容是JSON格式，可以使用 response.json() 来获取
         return response.json()
     elif response.status_code == 429:
