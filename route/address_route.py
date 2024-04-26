@@ -19,7 +19,7 @@ from framework.exceptions import BusinessException
 from models.report_address_model import InputModel, DataEntry
 
 from framework.result_enc import suc_enc
-from utils import constants, https_util, file_util, parameter_check
+from utils import constants, https_util, file_util, parameter_check, lark_notice_util
 from utils.file_util import get_json_data
 from utils.parameter_check import validate_param_in_list
 import io
@@ -92,6 +92,10 @@ async def report_address(json_data: InputModel):
         if char_member_result['result'] is not None and char_member_result['result']['user'] is not None and \
                 char_member_result['result']['user']['username'] is not None:
             tg_user_name = char_member_result['result']['user']['username']
+
+    if len(tg_user_name) == 0:
+        await lark_notice_util.make_error_notice("获取不到tg用户名字的数据" + json.dumps(char_member_result))
+
     message = replace_placeholders(telegram_message, json_data.data[0],
                                    cda_user.id, cda_user.organization,
                                    cda_user.nickname, tg_user_name)
