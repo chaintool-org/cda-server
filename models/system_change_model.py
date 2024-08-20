@@ -33,3 +33,15 @@ class NetworkEntity(BaseModel):
     @validator("network", pre=True, always=True)
     def validate_network_non_empty(cls, value):
         return validate_field_str(value, "network")
+
+
+class DownloadEntity(BaseModel):
+    # 必填
+    user_name: Optional[str]
+
+    # 选填
+    nickname: Optional[str]
+
+    @validator("user_name", pre=True, always=True)
+    def validate_user_name_non_empty(cls, value):
+        return validate_field_str(value, "user_name")

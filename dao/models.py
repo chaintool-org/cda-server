@@ -37,6 +37,7 @@ class CdaAddressOperation(BaseDbModel):
     organization = CharField(max_length=128)
     action_type = CharField(max_length=128)
     data = JSONField()
+    data_count = IntegerField()
 
     @classmethod
     def table_name(cls):

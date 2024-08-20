@@ -10,6 +10,7 @@ lark_base_notice = get_json_data(lark_base_notice_file)
 
 
 async def make_error_notice(message):
+    print("信息打印",message)
     base_body = lark_base_notice['content']['post']['zh_cn']
     base_body['title'] = "cda API 错误通知"
     error_message = [[{"text": message, "tag": "text"}]]

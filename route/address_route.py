@@ -250,7 +250,12 @@ def replace_placeholders(html_template, data: DataEntry, operation_id: str, orga
 
 
 @router.get("/address/download")
-async def download_csv(startDt: str, endDt: str, testMode: str = None):
+async def download_csv(startDt: str, endDt: str, testMode: str = None, cdaId: str = None):
+    if cdaId is None:
+        raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'cdaId is required!')
+    cda_user = await cda_user_dao.get_cda_user_by_id(constants.CONNECT_TYPE_TELEGRAM, cdaId)
+    if cda_user is None:
+        raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'User does not exist!')
     if testMode is None:
         testMode = 'prod'
     data = await cda_address_report_dao.get_report_list_by_dt(startDt, endDt, testMode)
@@ -270,6 +275,8 @@ async def download_csv(startDt: str, endDt: str, testMode: str = None):
         rows.append(row_d)
     df = pandas.DataFrame(rows)
     headers = {'Content-Disposition': 'attachment; filename="data.csv"'}
+    await cda_address_operation_dao.save_cda_address_operation(
+        make_cda_address_operation_data(cda_user, json.dumps(rows), 'DOWNLOAD'))
     return Response(df.to_csv(), headers=headers, media_type="text/csv")
 
 
