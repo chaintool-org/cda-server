@@ -197,7 +197,7 @@ async def address_get_id(cdaId: str = None, operateId: str = None, startTime: st
 
 
 def make_cda_address_operation_data(cda_user: CdaUser, data,
-                                    action_type: str = 'UPLOAD'):
+                                    action_type: str = 'UPLOAD', data_count: int = 0):
     cda_address_operation = CdaAddressOperation()
     cda_address_operation.gmt_create = datetime.now()
     cda_address_operation.gmt_modified = datetime.now()
@@ -206,6 +206,7 @@ def make_cda_address_operation_data(cda_user: CdaUser, data,
     cda_address_operation.organization = cda_user.organization
     cda_address_operation.action_type = action_type
     cda_address_operation.data = data
+    cda_address_operation.data_count = data_count
     return cda_address_operation
 
 
@@ -250,7 +251,13 @@ def replace_placeholders(html_template, data: DataEntry, operation_id: str, orga
 
 
 @router.get("/address/download")
-async def download_csv(startDt: str, endDt: str, testMode: str = None):
+async def download_csv(startDt: str, endDt: str, testMode: str = None, uid: str = None):
+    if uid is None or uid.strip() is False:
+        raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'telegram id is not present')
+    cda_user: CdaUser = await cda_user_dao.get_cda_user_by_id(constants.CONNECT_TYPE_TELEGRAM, uid)
+    if not cda_user:
+        raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, "User does not exist")
+
     if testMode is None:
         testMode = 'prod'
     data = await cda_address_report_dao.get_report_list_by_dt(startDt, endDt, testMode)
@@ -270,6 +277,13 @@ async def download_csv(startDt: str, endDt: str, testMode: str = None):
         rows.append(row_d)
     df = pandas.DataFrame(rows)
     headers = {'Content-Disposition': 'attachment; filename="data.csv"'}
+
+    await cda_address_operation_dao.save_cda_address_operation(
+        make_cda_address_operation_data(cda_user, json.dumps({
+            "cda_id": uid,
+            "cda_operation_data": str(data)
+        }), action_type='DOWNLOAD', data_count=len(data)))
+
     return Response(df.to_csv(), headers=headers, media_type="text/csv")
 
 

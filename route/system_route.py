@@ -3,11 +3,12 @@ import json
 from fastapi import APIRouter
 
 from asyncdb import transaction
-from dao import cda_organization_dao, org_change_history, cda_network_dao, network_change_history
+from dao import cda_organization_dao, org_change_history, cda_network_dao, network_change_history, \
+    cda_address_operation_dao
 from framework import errorcode
 from framework.exceptions import BusinessException
 from framework.result_enc import suc_enc
-from models.system_change_model import OrgEntity, NetworkEntity
+from models.system_change_model import OrgEntity, NetworkEntity, NameEntity
 
 router = APIRouter()
 
@@ -72,4 +73,17 @@ async def add_org(data: NetworkEntity):
 
     return suc_enc({
         'data': "删除成功👌"
+    })
+
+
+@router.post("/download/data/get")
+async def get_download_data(query_data: NameEntity):
+    # 返回得到的信息
+    if query_data.nickname is None:
+        cda_user_msg = await cda_address_operation_dao.query_operation()
+    else:
+        cda_user_msg = await cda_address_operation_dao.list_by_nickname(query_data.nickname)
+
+    return suc_enc({
+        'data': cda_user_msg
     })
