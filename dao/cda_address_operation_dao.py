@@ -20,3 +20,16 @@ async def cda_address_operation_id(cda_id: str) -> list:
 async def get_cda_address_operation_by_id(operation_id: int) -> CdaAddressOperation:
     print(operation_id)
     return await asyncdb.get_single(CdaAddressOperation.table_name(), 'id = %s', operation_id)
+
+
+async def query_operation() -> list:
+    result = await sql_to_dict(
+        'SELECT  gmt_create ,nickname,organization,data_count FROM cda_address_operation WHERE action_type = "DOWNLOAD" ORDER BY gmt_modified DESC')
+    return result
+
+
+async def list_by_nickname(nickname:str) -> list:
+     result = await sql_to_dict(
+        'SELECT  gmt_create ,nickname,organization,data_count FROM cda_address_operation WHERE action_type = "DOWNLOAD" AND nickname = %s ORDER BY gmt_modified DESC',nickname
+        )
+     return result
