@@ -4,7 +4,7 @@ WORKDIR /opt/
 EXPOSE 8080
 # 将 requirements.txt 复制到 /opt/ 目录
 COPY ["requirements.txt", "/opt/"]
-RUN pip3 install flask --index-url=http://192.168.100.223:11180/repository/pypi-group/simple -r requirements.txt --trusted-host=192.168.100.223
+#RUN pip3 install flask --index-url=http://192.168.100.223:11180/repository/pypi-group/simple -r requirements.txt --trusted-host=192.168.100.223
 # 将其余文件复制到 /opt/ 目录
 COPY [".", "/opt/"]
 #CMD   uvicorn server:app --port 8081 --host 0.0.0.0
