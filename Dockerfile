@@ -4,7 +4,7 @@ WORKDIR /opt/
 EXPOSE 8080
 # 将 requirements.txt 复制到 /opt/ 目录
 COPY ["requirements.txt", "/opt/"]
-RUN pip3 install flask
+RUN pip3 install flask -r requirements.txt
 # 将其余文件复制到 /opt/ 目录
 COPY [".", "/opt/"]
 #CMD   uvicorn server:app --port 8081 --host 0.0.0.0
