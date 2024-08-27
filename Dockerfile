@@ -12,3 +12,4 @@ ENV ms.db.url mysql://root:W1PkWn2hfOAy@172.27.240.4:3306/cda_db?useSSL=false&us
 ENV send.message.list ["dev", "test", "prod"]
 ENV send.message.token {"dev": {"token": "6625991991:AAFcsMIP8w_crVQuWnk1Y5_YGM0SLBYh_XQ", "chat_id": "-4099496644"},"test": {"token": "6625991991:AAFcsMIP8w_crVQuWnk1Y5_YGM0SLBYh_XQ", "chat_id": "-4099496644"},"prod": {"token": "6625991991:AAFcsMIP8w_crVQuWnk1Y5_YGM0SLBYh_XQ", "chat_id": "-4099496644"}}
 CMD python3 -u server.py
+
