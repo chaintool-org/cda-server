@@ -281,7 +281,8 @@ async def download_csv(startDt: str, endDt: str, testMode: str = None, tgId: str
     await cda_address_operation_dao.save_cda_address_operation(
         make_cda_address_operation_data(cda_user, json.dumps({
             "cda_id": cda_user.id,
-            "cda_operation_data": str(data)
+            "startDt": startDt,
+            "endDt": endDt
         }), action_type='DOWNLOAD', data_count=len(data)))
 
     return Response(df.to_csv(), headers=headers, media_type="text/csv")
