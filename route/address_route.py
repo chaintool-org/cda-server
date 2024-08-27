@@ -251,10 +251,10 @@ def replace_placeholders(html_template, data: DataEntry, operation_id: str, orga
 
 
 @router.get("/address/download")
-async def download_csv(startDt: str, endDt: str, testMode: str = None, uid: str = None):
-    if uid is None or uid.strip() is False:
+async def download_csv(startDt: str, endDt: str, testMode: str = None, tgId: str = None):
+    if tgId is None or tgId.strip() is False:
         raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'telegram id is not present')
-    cda_user: CdaUser = await cda_user_dao.get_cda_user_by_id(constants.CONNECT_TYPE_TELEGRAM, uid)
+    cda_user: CdaUser = await cda_user_dao.get_cda_user_by_connect_info(constants.CONNECT_TYPE_TELEGRAM, tgId)
     if not cda_user:
         raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, "User does not exist")
 
