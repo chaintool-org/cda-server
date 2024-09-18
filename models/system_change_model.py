@@ -35,11 +35,8 @@ class NetworkEntity(BaseModel):
         return validate_field_str(value, "network")
 
 
-
-
 class NameEntity(BaseModel):
-
-    #必填
+    # 必填
     user_name: Optional[str]
 
     nickname: Optional[str]

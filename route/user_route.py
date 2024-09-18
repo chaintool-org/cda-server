@@ -48,16 +48,5 @@ async def connect_tg(tgId: str = None, org: str = None, nickname: str = None):
         return suc_enc({
             'cdaId': cda_user.id
         })
-
-    cda_user: CdaUser = CdaUser()
-    cda_user.organization = org
-    cda_user.connect_type = constants.CONNECT_TYPE_TELEGRAM
-    cda_user.connect_id = tgId
-    cda_user.nickname = nickname
-    await cda_user.save()
-
-    saved_user = await cda_user_dao.get_cda_user_by_connect_info(constants.CONNECT_TYPE_TELEGRAM, tgId)
-
-    return suc_enc({
-        'cdaId': saved_user.id
-    })
+    raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL,
+                            "Contact your administrator to request that your account be added.")
