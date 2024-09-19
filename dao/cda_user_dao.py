@@ -1,4 +1,4 @@
-from asyncdb import sql_to_dict
+from asyncdb import sql_to_dict, execute_sql
 from dao.models import CdaUser
 
 
@@ -19,3 +19,20 @@ async def update_user_by_username(nickname: str, connect_id: int, connect_type: 
            f'and connect_type = "{connect_type}"')
     await sql_to_dict(sql)
 
+
+async def save_user(connect_type: str, nickname: str, organization: str):
+    cda_user = CdaUser()
+    cda_user.nickname = nickname
+    cda_user.organization = organization
+    cda_user.connect_type = connect_type
+    await cda_user.save()
+
+
+async def update_status(user_id: int, status: int):
+    sql = f'update {CdaUser.table_name()} set status = {status} where id = {user_id}'
+    await execute_sql(sql)
+
+
+async def list_user():
+    sql = f'select * from {CdaUser.table_name()} order by gmt_create desc '
+    return await sql_to_dict(sql)
