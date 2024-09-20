@@ -49,4 +49,4 @@ async def connect_tg(tgId: str = None, org: str = None, nickname: str = None):
             'cdaId': cda_user.id
         })
     raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL,
-                            "Contact your administrator to request that your account be added.")
+                            "To use the CDA TG bot, you must first be a member of the CDA TG channel. Please contact your administrator to be added to the channel.")

@@ -17,7 +17,7 @@ async def get_cda_user_by_user_name(connect_type: str, nickname: str) -> CdaUser
 async def update_user_by_username(nickname: str, connect_id: int, connect_type: str):
     sql = (f'update {CdaUser.table_name()} set connect_id = "{connect_id}" where nickname = "{nickname}" '
            f'and connect_type = "{connect_type}"')
-    await sql_to_dict(sql)
+    await execute_sql(sql)
 
 
 async def save_user(connect_type: str, nickname: str, organization: str):
