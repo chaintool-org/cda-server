@@ -46,7 +46,7 @@ async def business_exception_handler(request: Request, exc: BusinessException):
 
 # 异常处理器2：处理所有异常
 async def catch_all_exception_handler(request, exc):
-    # await lark_notice_util.make_error_notice(traceback.format_exc())
+    await lark_notice_util.make_error_notice(traceback.format_exc())
     return JSONResponse(status_code=500, content={"errorMessage": "Internal Server Error"})
 
 
