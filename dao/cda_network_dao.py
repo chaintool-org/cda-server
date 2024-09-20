@@ -23,4 +23,5 @@ async def add_network(network: str):
 
 
 async def delete_network(network: str):
-    await asyncdb.delete(CdaNetwork.table_name(), "network = %s", network)
+    sql = f'update {CdaNetwork.table_name()} set status=1 where binary network="{network}"'
+    await sql_to_dict(sql)

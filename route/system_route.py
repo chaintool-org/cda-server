@@ -4,11 +4,13 @@ from fastapi import APIRouter
 
 from asyncdb import transaction
 from dao import cda_organization_dao, org_change_history, cda_network_dao, network_change_history, \
-    cda_address_operation_dao
+    cda_address_operation_dao, cda_user_dao
 from framework import errorcode
 from framework.exceptions import BusinessException
 from framework.result_enc import suc_enc
-from models.system_change_model import OrgEntity, NetworkEntity, NameEntity
+from models.system_change_model import OrgEntity, NetworkEntity, NameEntity, UserQueryEntity, UserSaveEntity, \
+    UserUpdateEntity
+from utils.constants import CONNECT_TYPE_TELEGRAM
 
 router = APIRouter()
 
@@ -87,3 +89,32 @@ async def get_download_data(query_data: NameEntity):
     return suc_enc({
         'data': cda_user_msg
     })
+
+
+@router.post("/user/list")
+async def get_user_list(query_data: UserQueryEntity):
+    return suc_enc({
+        'data': await cda_user_dao.list_user()
+    })
+
+
+@router.post("/user/save")
+@transaction
+async def update_user(query_data: UserSaveEntity):
+    already_data = []
+    for data in query_data.data:
+        cda_user = await cda_user_dao.get_cda_user_by_user_name(CONNECT_TYPE_TELEGRAM, data['nickname'])
+        if cda_user is None:
+            await cda_user_dao.save_user(data['connect_type'], data['nickname'], data['organization'])
+        else:
+            already_data.append(data['nickname'])
+    return suc_enc({'data': already_data})
+
+
+@router.post("/user/update")
+async def update_user(query_data: UserUpdateEntity):
+    cda_user = await cda_user_dao.get_cda_user_by_id(CONNECT_TYPE_TELEGRAM, str(query_data.user_id))
+    if cda_user is None:
+        raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, "This user does not exist")
+    await cda_user_dao.update_status(query_data.user_id, query_data.status)
+    return suc_enc({'data': "用户状态更新成功👌"})

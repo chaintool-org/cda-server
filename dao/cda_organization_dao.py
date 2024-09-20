@@ -23,4 +23,5 @@ async def add_organization(organization: str):
 
 
 async def delete_organizations(organization: str):
-    await asyncdb.delete(CdaOrganization.table_name(), "organization = %s", organization)
+    sql = f"update {CdaOrganization.table_name()} set status=1 where binary organization = %s"
+    await sql_to_dict(sql, organization)
