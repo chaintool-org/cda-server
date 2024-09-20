@@ -71,7 +71,7 @@ async def download_handler(command_args, chat_id, message_id):
 
     try:
         # 模拟下载过程
-        csv_content = await download_csv(start_time, end_time, testMode='dev', tgId=str(chat_id))
+        csv_content = await download_csv(start_time, end_time, tgId=str(chat_id))
 
         if not csv_content:
             return await download_reply_message(get_tg_token(), chat_id, message_id,
