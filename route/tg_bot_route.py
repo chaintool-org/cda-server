@@ -1,8 +1,7 @@
 import os
 
-from starlette.requests import Request
-
 from fastapi import APIRouter
+from starlette.requests import Request
 
 from asyncdb import setting
 from dao import cda_user_dao
@@ -29,18 +28,24 @@ async def init():
 async def message_handler(request: Request):
     data = await request.json()
     if data is not None:
-        message_id = data['message']['message_id']
-        chat_id = data['message']['chat']['id']
-        username = data['message']['from']['username']
-        next_step = await verify_user(chat_id, message_id, username)
-        if next_step is False:
-            return "ok"
-        if data['message']['text'] == '/report':
-            await send_message_reply_message(get_tg_token(), chat_id,
-                                             message_id)
-        if '/download' in data['message']['text']:
-            await download_handler(data['message']['text'], chat_id,
-                                   message_id)
+        message_id, chat_id, username = None, None, None
+        if "message" in data:
+            if "message_id" in data["message"]:
+                message_id = data['message']['message_id']
+            if "chat" in data["message"]:
+                chat_id = data['message']['chat']['id']
+            if "from" in data["message"] and "username" in data["message"]["from"]:
+                username = data['message']['from']['username']
+        if message_id and chat_id and username:
+            next_step = await verify_user(chat_id, message_id, username)
+            if next_step is False:
+                return "ok"
+            if data['message']['text'] == '/report':
+                await send_message_reply_message(get_tg_token(), chat_id,
+                                                 message_id)
+            if '/download' in data['message']['text']:
+                await download_handler(data['message']['text'], chat_id,
+                                       message_id)
     return "ok1"
 
 
