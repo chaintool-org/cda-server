@@ -36,7 +36,7 @@ async def message_handler(request: Request):
                 chat_id = data['message']['chat']['id']
             if "from" in data["message"] and "username" in data["message"]["from"]:
                 username = data['message']['from']['username']
-        if message_id and chat_id and username:
+        if message_id is not None and chat_id is not None and username is not None:
             next_step = await verify_user(chat_id, message_id, username)
             if next_step is False:
                 return "ok"
