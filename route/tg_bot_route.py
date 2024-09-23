@@ -27,6 +27,7 @@ async def init():
 @router.post("/api/tg/robot/webhook")
 async def message_handler(request: Request):
     data = await request.json()
+    print(str(data))
     if data is not None:
         message_id, chat_id, username = None, None, None
         if "message" in data:
@@ -40,6 +41,8 @@ async def message_handler(request: Request):
             next_step = await verify_user(chat_id, message_id, username)
             if next_step is False:
                 return "ok"
+            if "text" not in data["message"]:
+                return "no ok,没有text"
             if data['message']['text'] == '/report':
                 await send_message_reply_message(get_tg_token(), chat_id,
                                                  message_id)
