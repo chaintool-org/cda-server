@@ -8,8 +8,9 @@ from dao import cda_user_dao
 from dao.models import CdaUser
 from framework.error_message import DOWNLOAD_ERROR_MSG, DOWNLOAD_ERROR_MSG_INVALID_TIME, DOWNLOAD_ERROR_MSG_NOT_FOUND, \
     DOWNLOAD_ERROR_MSG_FAILED, TG_USER_NOT_REGISTERED, TG_USER_DELETED, TG_USER_BANNED
-from route.address_route import send_message_token, download_csv
+from route.address_route import download_csv
 from utils import file_util, https_util, constants
+from utils.constants import send_message_token
 from utils.date_util import get_time, str_time_format, format1, format2
 from utils.https_util import set_commands, set_webhook, send_message_reply_message, download_reply_message
 
