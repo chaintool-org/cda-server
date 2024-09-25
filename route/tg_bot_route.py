@@ -134,12 +134,9 @@ async def get_tg_info(data):
 
 
 async def make_tg_message(message_id, chat_id, chat_type, data):
-    try:
-        print(f'get_name{send_message_token[setting.environment]}')
-        print(f'get_name{send_message_token[setting.environment]["tg_name"]}')
-        tg_bot_name = send_message_token[setting.environment]["tg_name"]
-    except Exception:
-        tg_bot_name = "@CDAReporterBot"
+
+    tg_bot_name = send_message_token[setting.environment]["tg_name"]
+
     if message_id is not None and chat_id is not None:
         if chat_type == 'group':
             return "非机器人私聊"
