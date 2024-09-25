@@ -6,6 +6,8 @@ from starlette.requests import Request
 from asyncdb import setting
 from dao import cda_user_dao
 from dao.models import CdaUser
+from framework.error_message import DOWNLOAD_ERROR_MSG, DOWNLOAD_ERROR_MSG_INVALID_TIME, DOWNLOAD_ERROR_MSG_NOT_FOUND, \
+    DOWNLOAD_ERROR_MSG_FAILED, TG_USER_NOT_REGISTERED, TG_USER_DELETED, TG_USER_BANNED
 from route.address_route import send_message_token, download_csv
 from utils import file_util, https_util, constants
 from utils.date_util import get_time, str_time_format, format1, format2
@@ -27,32 +29,21 @@ async def init():
 @router.post("/api/tg/robot/webhook")
 async def message_handler(request: Request):
     data = await request.json()
+    print(str(data))
     if data is not None:
-        message_id, chat_id, username = None, None, None
-        if "message" in data:
-            if "message_id" in data["message"]:
-                message_id = data['message']['message_id']
-            if "chat" in data["message"]:
-                chat_id = data['message']['chat']['id']
-            if "from" in data["message"] and "username" in data["message"]["from"]:
-                username = data['message']['from']['username']
+        message_id, chat_id, username, chat_type = await get_tg_info(data)
         if message_id is not None and chat_id is not None and username is not None:
-            next_step = await verify_user(chat_id, message_id, username)
+            next_step = await verify_user(chat_id, message_id, username, chat_type)
             if next_step is False:
                 return "ok"
-            if data['message']['text'] == '/report':
-                await send_message_reply_message(get_tg_token(), chat_id,
-                                                 message_id)
-            if '/download' in data['message']['text']:
-                await download_handler(data['message']['text'], chat_id,
-                                       message_id)
+            await make_tg_message(message_id, chat_id, chat_type, data)
     return "ok1"
 
 
 # 下载文件的处理函数
-async def download_handler(command_args, chat_id, message_id):
+async def download_handler(command_args, chat_id, message_id, tg_bot_name):
     # 如果命令后没有参数，给出帮助提示
-    if '/download' == command_args:
+    if '/download' == command_args or f'/download{tg_bot_name}' == command_args:
         await download_reply_message(get_tg_token(), chat_id, message_id, telegram_message)
         return
     # 先去掉命令前缀 '/download'
@@ -61,7 +52,7 @@ async def download_handler(command_args, chat_id, message_id):
     # 检查命令后是否包含 'd', 'w', 'm' 或日期范围 '-'
     if not any(char in command_args for char in 'dwm-'):
         return await download_reply_message(get_tg_token(), chat_id, message_id,
-                                            "Invalid input format. Please provide a valid time range.")
+                                            DOWNLOAD_ERROR_MSG)
     # 将输入的参数分割
     args = command_args.strip().split(' ')
     arg1 = args[0]
@@ -70,7 +61,7 @@ async def download_handler(command_args, chat_id, message_id):
     # 解析时间
     time_range = get_time(arg1, arg2)
     if time_range is None:
-        return await download_reply_message(get_tg_token(), chat_id, message_id, "Invalid input")
+        return await download_reply_message(get_tg_token(), chat_id, message_id, DOWNLOAD_ERROR_MSG_INVALID_TIME)
 
     start_time, end_time, id_str = time_range
 
@@ -80,7 +71,7 @@ async def download_handler(command_args, chat_id, message_id):
 
         if not csv_content:
             return await download_reply_message(get_tg_token(), chat_id, message_id,
-                                                "No data available")
+                                                DOWNLOAD_ERROR_MSG_NOT_FOUND)
         # 保存文件
         temp_file = f"{await str_time_format(start_time, format1, format2)}_{await str_time_format(end_time, format1, format2)}.csv"
         with open(temp_file, 'wb') as file:
@@ -92,10 +83,10 @@ async def download_handler(command_args, chat_id, message_id):
         os.remove(temp_file)
     except Exception as e:
         print(f"Error during download: {e}")
-        return await download_reply_message(get_tg_token(), chat_id, message_id, "Download failed")
+        return await download_reply_message(get_tg_token(), chat_id, message_id, DOWNLOAD_ERROR_MSG_FAILED)
 
 
-async def verify_user(chat_id, message_id, username):
+async def verify_user(chat_id, message_id, username, chat_type):
     next_step = False
     cda_user_by_id: CdaUser = await cda_user_dao.get_cda_user_by_connect_info(constants.CONNECT_TYPE_TELEGRAM,
                                                                               chat_id)
@@ -103,15 +94,15 @@ async def verify_user(chat_id, message_id, username):
                                                                              username)
     if cda_user_by_id is None and cda_user_by_name is None:
         await download_reply_message(get_tg_token(), chat_id, message_id,
-                                     "To use the CDA TG bot, you must first be a member of the CDA TG channel. Please contact your administrator to be added to the channel.")
+                                     TG_USER_NOT_REGISTERED, chat_type)
     if cda_user_by_id is not None:
         if cda_user_by_id.status == 1:
             await download_reply_message(get_tg_token(), chat_id, message_id,
-                                         "Your account has been removed. Please contact your administrator to reactivate your account")
+                                         TG_USER_DELETED, chat_type)
 
         if cda_user_by_id.status == 2:
             await download_reply_message(get_tg_token(), chat_id, message_id,
-                                         "Your account has been temporarily locked. Please contact your administrator to reactivate your account")
+                                         TG_USER_BANNED, chat_type)
         if cda_user_by_id.status == 0:
             next_step = True
     if cda_user_by_id is None and cda_user_by_name is not None:
@@ -126,3 +117,32 @@ def get_tg_token():
     if environment is None:
         environment = "dev"
     return send_message_token[environment]["token"]
+
+
+async def get_tg_info(data):
+    message_id, chat_id, username, chat_type = None, None, None, None
+    if "message" in data:
+        if "message_id" in data["message"]:
+            message_id = data['message']['message_id']
+        if "chat" in data["message"]:
+            chat_type = data['message']['chat']['type']
+        if "from" in data["message"] and "username" in data["message"]["from"]:
+            username = data['message']['from']['username']
+            chat_id = data['message']['from']['id']
+    return message_id, chat_id, username, chat_type
+
+
+async def make_tg_message(message_id, chat_id, chat_type, data):
+    tg_bot_name = send_message_token[setting.environment]["tg_name"]
+    if message_id is not None and chat_id is not None:
+        if chat_type == 'group':
+            return "非机器人私聊"
+        if "text" not in data["message"]:
+            return "no ok,没有text"
+        text = data['message']['text']
+        if text == '/report' == text or f'/report{tg_bot_name}' == text:
+            await send_message_reply_message(get_tg_token(), chat_id,
+                                             message_id)
+        if '/download' in text or f'/download{tg_bot_name}' == text:
+            await download_handler(text, chat_id,
+                                   message_id, tg_bot_name)

@@ -15,11 +15,15 @@ from asyncdb import transaction
 from dao import cda_user_dao, cda_address_operation_dao, cda_address_report_dao, cda_network_dao
 from dao.models import CdaUser, CdaAddressOperation, CdaAddressReport
 from framework import errorcode
+from framework.error_message import USER_NOT_FOUND, TEST_MODE_NOT_FOUND, NETWORK_NOT_FOUND, PUBLIC_NOT_FOUND, \
+    CDA_ID_NOT_FOUND, START_TIME_ERROR, START_TIME_LENGTH_ERROR, END_TIME_ERROR, END_TIME_LENGTH_ERROR, PAGE_TYPE_ERROR, \
+    PAGE_LENGTH_ERROR, OPERATE_ID_NOT_FOUND, TG_ID_NOT_FOUND
 from framework.exceptions import BusinessException
 from models.report_address_model import InputModel, DataEntry
 
 from framework.result_enc import suc_enc
 from utils import constants, https_util, file_util, parameter_check, lark_notice_util
+from utils.constants import test_mode, send_message_token
 from utils.file_util import get_json_data
 from utils.parameter_check import validate_param_in_list
 import io
@@ -34,22 +38,9 @@ telegram_message_file = "static/html/telegram_message.html"
 categories = get_json_data(categories_file)
 telegram_message = file_util.get_file(telegram_message_file)
 
-# 发消息的testMode
-test_mode = json.loads(os.getenv('SEND_MESSAGE_LIST', '["dev", "test", "prod"]'))
-# 发送消息的token
-send_message_token = json.loads(os.getenv('SEND_MESSAGE_TOKEN',
-                                          '{"dev": {"token": "6767843762:AAGSVGuWWW7bAqRLProaQxPbN1MzLpmZS1g",'
-                                          ' "chat_id": "-4196810865"},'
-                                          '"test": {"token": "6719660314:AAHnyhfgS6An6Ff2RcjT679xPWLhgSXfseo",'
-                                          ' "chat_id": "-1002111465087"},'
-                                          '"prod": {"token": "6566268578:AAGc4sGBLHlIpCBBtUBCJDVu4fzP5IdhUeg", '
-                                          '"chat_id": "-1001280903433"} }'))
-
 
 @router.get("/address/config")
 async def get_config():
-    print(test_mode)
-    print(send_message_token)
     networks = await cda_network_dao.get_all_valid_networks()
     return suc_enc({
         "networks": networks,
@@ -63,20 +54,20 @@ async def report_address(json_data: InputModel):
     cda_user: CdaUser = await cda_user_dao.get_cda_user_by_id(constants.CONNECT_TYPE_TELEGRAM, str(json_data.cdaId))
     # # 判断cda_user为空时抛出异常
     if cda_user is None:
-        raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'User does not exist!')
+        raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, USER_NOT_FOUND)
     parameter_check.user_status_check(cda_user, False)
 
     if not validate_param_in_list(json_data.testMode, test_mode):
-        raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'testMode does not exist!')
+        raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, TEST_MODE_NOT_FOUND)
 
     networks = await cda_network_dao.get_all_valid_networks()
     # 判断network是否在networks中
     for item in json_data.data:
         if not validate_param_in_list(item.network, networks):
-            raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'Network does not exist!')
+            raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, NETWORK_NOT_FOUND)
 
         if not validate_param_in_list(item.public, [0, 1]):
-            raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'Public does not exist!')
+            raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, PUBLIC_NOT_FOUND)
 
     operation_data = make_cda_address_operation_data(cda_user, json_data.json())
     last_inserted_id = await cda_address_operation_dao.save_cda_address_operation(operation_data)
@@ -115,41 +106,41 @@ async def address_get_id(cdaId: str = None, operateId: str = None, startTime: st
                          testMode: str = None,
                          page: str = None, size: str = None):
     if cdaId is None or cdaId.strip() is False or cdaId.isdigit() is False:
-        raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'cdaId does not exist!')
+        raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, CDA_ID_NOT_FOUND)
 
     if testMode is None:
         testMode = test_mode[2]
     else:
         if not validate_param_in_list(testMode, test_mode):
-            raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'testMode does not exist!')
+            raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, TEST_MODE_NOT_FOUND)
 
     if startTime is not None:
         if startTime.isdigit() is False:
-            raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'startTime error!')
+            raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, START_TIME_ERROR)
         if len(startTime) != 13:
-            raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'startTime length error!')
+            raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, START_TIME_LENGTH_ERROR)
     else:
         startTime = 0000000000000
     if endTime is not None:
         if endTime.isdigit() is False:
-            raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'endTime error!')
+            raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, END_TIME_ERROR)
         if len(endTime) != 13:
-            raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'endTime length error!')
+            raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, END_TIME_LENGTH_ERROR)
     else:
         endTime = int(time.time()) * 1000
 
     if testMode is not None:
         if testMode.strip() is False:
-            raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'testMode does not exist!')
+            raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, TEST_MODE_NOT_FOUND)
     else:
         testMode = test_mode[2]
     if page is not None and page.isdigit() is False:
-        raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'page Not a number!')
+        raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, PAGE_TYPE_ERROR)
     else:
         page = 1
     if size is not None:
         if size.isdigit() is False:
-            raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'size Not a number!')
+            raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, PAGE_LENGTH_ERROR)
     else:
         size = 20
 
@@ -157,14 +148,14 @@ async def address_get_id(cdaId: str = None, operateId: str = None, startTime: st
 
     # 判断cda_user为空时抛出异常
     if cda_user is None:
-        raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'User does not exist!')
+        raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, USER_NOT_FOUND)
     parameter_check.user_status_check(cda_user, False)
 
     addresses = []
     if operateId is not None:
         # 判断是否是纯数字
         if operateId.isdigit() is False:
-            raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'operateId does not exist!')
+            raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, OPERATE_ID_NOT_FOUND)
         await cda_address_operation_dao.save_cda_address_operation(
             make_cda_address_operation_data(cda_user, json.dumps({
                 "cda_id": cdaId,
@@ -172,7 +163,7 @@ async def address_get_id(cdaId: str = None, operateId: str = None, startTime: st
             }), 'QUERY'))
         cda_address_operation = await cda_address_operation_dao.get_cda_address_operation_by_id(int(operateId))
         if cda_address_operation is None:
-            raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'Operation does not exist!')
+            raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, OPERATE_ID_NOT_FOUND)
 
         addresses = await cda_address_report_dao.get_prod_cda_address_report_by_id(operate_id=cda_address_operation.id,
                                                                                    page=int(page),
@@ -253,10 +244,10 @@ def replace_placeholders(html_template, data: DataEntry, operation_id: str, orga
 @router.get("/address/download")
 async def download_csv(startDt: str, endDt: str, testMode: str = None, tgId: str = None):
     if tgId is None or tgId.strip() is False:
-        raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'telegram id is not present')
+        raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, TG_ID_NOT_FOUND)
     cda_user: CdaUser = await cda_user_dao.get_cda_user_by_connect_info(constants.CONNECT_TYPE_TELEGRAM, tgId)
     if not cda_user:
-        raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, "User does not exist")
+        raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, USER_NOT_FOUND)
 
     if testMode is None:
         testMode = 'prod'

@@ -2,7 +2,9 @@ import os
 
 import requests
 
+from asyncdb import setting
 from utils import lark_notice_util
+from utils.constants import send_message_token
 
 tg_api_url = f"https://api.telegram.org/bot"
 
@@ -107,7 +109,7 @@ async def set_webhook(bot_token, webhook_url):
         print("Failed to set webhook:", response.text)
 
 
-async def send_message_reply_message(bot_token, chat_id, message_id):
+async def send_message_reply_message(bot_token, chat_id, message_id, chat_type='private'):
     # API URL
     url = f"{tg_api_url}{bot_token}/sendMessage"
 
@@ -115,13 +117,14 @@ async def send_message_reply_message(bot_token, chat_id, message_id):
     params = {
         'chat_id': chat_id,  # 对话ID
         'text': 'Click the button below to submit the risk data.',  # 消息文本
-        'reply_to_message_id': message_id,  # 引用的消息ID
         'reply_markup': {
             'inline_keyboard': [
                 [{'text': 'Report', 'url': 'https://t.me/CDAReporterBot/webapp?startapp=path_report__tokenType_prod'}]
             ]
         }
     }
+    if chat_type == 'private':
+        params['reply_to_message_id'] = message_id
 
     # 发送 POST 请求
     response = requests.post(url, json=params)
@@ -133,7 +136,7 @@ async def send_message_reply_message(bot_token, chat_id, message_id):
         print(f"Failed to send message. Response: {response.text}")
 
 
-async def download_reply_message(bot_token, chat_id, message_id, message):
+async def download_reply_message(bot_token, chat_id, message_id, message, chat_type='private'):
     # API URL
     url = f"{tg_api_url}{bot_token}/sendMessage"
 
@@ -141,10 +144,10 @@ async def download_reply_message(bot_token, chat_id, message_id, message):
     params = {
         'chat_id': chat_id,  # 对话ID
         'text': message,
-        # 消息文本
-        'reply_to_message_id': message_id,  # 引用的消息ID
-        "parse_mode": "HTML"
+        "parse_mode": "HTML",
     }
+    if chat_type == 'private':
+        params['reply_to_message_id'] = message_id
 
     # 发送 POST 请求
     response = requests.post(url, json=params)
