@@ -89,3 +89,23 @@ class UserUpdateEntity(BaseModel):
             return verify_value
         else:
             raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, "status must be 0 or 1 or -1")
+
+class UserApiTokenEntity(BaseModel):
+    user_id: Optional[str]
+    @validator("user_id", pre=True, always=True)
+    def validate_user_id_non_empty(cls, value):
+        return validate_field_int(value, "user_id")
+
+class UserTokenUpdateEntity(BaseModel):
+    user_id: Optional[str]
+    status: Optional[str]
+    @validator("user_id", pre=True, always=True)
+    def validate_user_id_non_empty(cls, value):
+        return validate_field_int(value, "user_id")
+    @validator("status", pre=True, always=True)
+    def validate_status_non_empty(cls, value):
+        verify_value = validate_field_int(value, "status")
+        if verify_value in ['ACTIVE','EXPIRE']:
+            return verify_value
+        else:
+            raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, "status must be ACTIVE or EXPIRE")

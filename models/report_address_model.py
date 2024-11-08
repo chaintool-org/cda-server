@@ -52,3 +52,15 @@ class InputModel(BaseModel):
     @validator("data", pre=True, always=True)
     def validate_data_non_empty(cls, value):
         return validate_field_list(value, "data")
+
+class DownloadModel(BaseModel):
+    # 必填
+    startDt: Optional[str]
+    endDt: Optional[str]
+    @validator("startDt", pre=True, always=True)
+    def validate_start_dt_non_empty(cls, value):
+        return validate_field_str(value, "startDt")
+
+    @validator("endDt", pre=True, always=True)
+    def validate_end_dt_non_empty(cls, value):
+        return validate_field_str(value, "endDt")
