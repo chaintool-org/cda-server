@@ -2,6 +2,7 @@ import json
 
 import requests
 
+from asyncdb import setting
 from utils.file_util import get_json_data
 
 lark_base_notice_file = "static/json/lark_base_notice.json"
@@ -10,12 +11,16 @@ lark_base_notice = get_json_data(lark_base_notice_file)
 
 
 async def make_error_notice(message):
-    base_body = lark_base_notice['content']['post']['zh_cn']
-    base_body['title'] = "cda API 错误通知"
-    error_message = [[{"text": message, "tag": "text"}]]
-    base_body['content'] = error_message
-    await send_post_request(lark_base_notice,
-                            "https://open.larksuite.com/open-apis/bot/v2/hook/aa022d36-c0b9-4b41-a198-33bab81a7d17")
+    environment = setting.environment
+    if environment is None:
+        environment = "dev"
+    if environment != "dev":
+        base_body = lark_base_notice['content']['post']['zh_cn']
+        base_body['title'] = "cda API 错误通知"
+        error_message = [[{"text": message, "tag": "text"}]]
+        base_body['content'] = error_message
+        await send_post_request(lark_base_notice,
+                                "https://open.larksuite.com/open-apis/bot/v2/hook/aa022d36-c0b9-4b41-a198-33bab81a7d17")
 
 
 async def send_post_request(json_data,

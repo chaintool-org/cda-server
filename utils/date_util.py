@@ -47,3 +47,27 @@ async def str_time_format(date_str, from_format, to_format):
     date_obj = datetime.strptime(date_str, from_format)
     formatted_date = date_obj.strftime(to_format)
     return formatted_date
+
+async def validate_datetime_format(date_string):
+    try:
+        # 尝试用指定格式解析日期字符串
+        datetime.strptime(date_string, "%Y/%m/%d 00:00:00")
+        return True
+    except ValueError:
+        # 如果解析失败则说明格式不匹配
+        return False
+
+async def validate_time_range(start_date_str, end_date_str):
+    try:
+        # 解析开始时间和结束时间字符串
+        start_date = datetime.strptime(start_date_str, "%Y/%m/%d 00:00:00")
+        end_date = datetime.strptime(end_date_str, "%Y/%m/%d 00:00:00")
+
+        # 确保开始时间小于结束时间
+        if start_date < end_date:
+            return True
+        else:
+            return False
+    except ValueError:
+        # 如果解析失败则说明格式不匹配
+        return False

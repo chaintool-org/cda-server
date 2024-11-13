@@ -9,22 +9,26 @@ import pandas
 from cffi.backend_ctypes import long
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
+from starlette.requests import Request
 from starlette.responses import FileResponse, Response
 
 from asyncdb import transaction
-from dao import cda_user_dao, cda_address_operation_dao, cda_address_report_dao, cda_network_dao
-from dao.models import CdaUser, CdaAddressOperation, CdaAddressReport
+from dao import cda_user_dao, cda_address_operation_dao, cda_address_report_dao, cda_network_dao, user_api_token_dao
+from dao.cda_user_dao import get_cda_user_by_id
+from dao.models import CdaUser, CdaAddressOperation, CdaAddressReport, UserApiToken
 from framework import errorcode
 from framework.error_message import USER_NOT_FOUND, TEST_MODE_NOT_FOUND, NETWORK_NOT_FOUND, PUBLIC_NOT_FOUND, \
     CDA_ID_NOT_FOUND, START_TIME_ERROR, START_TIME_LENGTH_ERROR, END_TIME_ERROR, END_TIME_LENGTH_ERROR, PAGE_TYPE_ERROR, \
     PAGE_LENGTH_ERROR, OPERATE_ID_NOT_FOUND, TG_ID_NOT_FOUND
 from framework.exceptions import BusinessException
-from models.report_address_model import InputModel, DataEntry
+from models.report_address_model import InputModel, DataEntry, DownloadModel
 
 from framework.result_enc import suc_enc
 from utils import constants, https_util, file_util, parameter_check, lark_notice_util
-from utils.constants import test_mode, send_message_token
+from utils.constants import test_mode, send_message_token, CONNECT_TYPE_TELEGRAM
+from utils.date_util import validate_datetime_format, validate_time_range
 from utils.file_util import get_json_data
+from utils.login_checker import check_login
 from utils.parameter_check import validate_param_in_list
 import io
 
@@ -251,7 +255,42 @@ async def download_csv(startDt: str, endDt: str, testMode: str = None, tgId: str
 
     if testMode is None:
         testMode = 'prod'
-    data = await cda_address_report_dao.get_report_list_by_dt(startDt, endDt, testMode)
+    df, headers = await get_download_data(cda_user, startDt, endDt, testMode)
+    return Response(df.to_csv(), headers=headers, media_type="text/csv")
+
+
+@router.post("/api/address/download")
+@check_login()
+async def download_csv(request: Request, download_param: DownloadModel):
+    token = request.headers['TOKEN']
+    start_result = await validate_datetime_format(download_param.startDt)
+    end_result = await validate_datetime_format(download_param.endDt)
+    if start_result is False:
+        raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, "startDt format error")
+    if end_result is False:
+        raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, "endDt format error")
+    if await validate_time_range(download_param.startDt, download_param.endDt) is False:
+        raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, "startDt must be less than endDt")
+    # 根据token获取对应对应的用户id
+    user_api_token: UserApiToken = await user_api_token_dao.get_by_token(token)
+    # 通过用户id获取用户信息
+    user_info = await get_cda_user_by_id(CONNECT_TYPE_TELEGRAM, user_api_token.user_id)
+    if not user_info:
+        raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, USER_NOT_FOUND)
+    # 用户装填检测
+    if True is parameter_check.user_status_check(user_info):
+        df, headers = await get_download_data(user_info, download_param.startDt, download_param.endDt)
+        return Response(df.to_csv(), headers=headers, media_type="text/csv")
+
+
+async def parse_none_value(param: str):
+    if param is None or len(param) == 0 or param.isspace():
+        return 'None'
+    return param
+
+
+async def get_download_data(user_info: CdaUser, start_dt: str, end_dt: str, test_mode: str = 'prod'):
+    data = await cda_address_report_dao.get_report_list_by_dt(start_dt, end_dt, test_mode)
     rows = []
     for row in data:
         row_d = {'timestamp': row.get('timestamp'), 'record_id': row.get('record_id'),
@@ -270,16 +309,9 @@ async def download_csv(startDt: str, endDt: str, testMode: str = None, tgId: str
     headers = {'Content-Disposition': 'attachment; filename="data.csv"'}
 
     await cda_address_operation_dao.save_cda_address_operation(
-        make_cda_address_operation_data(cda_user, json.dumps({
-            "cda_id": cda_user.id,
-            "startDt": startDt,
-            "endDt": endDt
+        make_cda_address_operation_data(user_info, json.dumps({
+            "cda_id": user_info.id,
+            "startDt": start_dt,
+            "endDt": end_dt
         }), action_type='DOWNLOAD', data_count=len(data)))
-
-    return Response(df.to_csv(), headers=headers, media_type="text/csv")
-
-
-async def parse_none_value(param: str):
-    if param is None or len(param) == 0 or param.isspace():
-        return 'None'
-    return param
+    return df, headers
