@@ -9,10 +9,11 @@ from dao.models import CdaUser
 from framework.error_message import DOWNLOAD_ERROR_MSG, DOWNLOAD_ERROR_MSG_INVALID_TIME, DOWNLOAD_ERROR_MSG_NOT_FOUND, \
     DOWNLOAD_ERROR_MSG_FAILED, TG_USER_NOT_REGISTERED, TG_USER_DELETED, TG_USER_BANNED
 from route.address_route import download_csv
-from utils import file_util, https_util, constants
+from utils import file_util, https_util, constants, lark_notice_util
 from utils.constants import send_message_token
 from utils.date_util import get_time, str_time_format, format1, format2
 from utils.https_util import set_commands, set_webhook, send_message_reply_message, download_reply_message
+from utils.lark_notice_util import lark_base_notice
 
 router = APIRouter()
 telegram_message_file = "static/html/telegram_download_message.html"
@@ -83,7 +84,7 @@ async def download_handler(command_args, chat_id, message_id, tg_bot_name):
                                            message_id=message_id, file_path=temp_file)
         os.remove(temp_file)
     except Exception as e:
-        print(f"Error during download: {e}")
+        await lark_notice_util.make_error_notice("下载出错了，tg_bot_route 87 line")
         return await download_reply_message(get_tg_token(), chat_id, message_id, DOWNLOAD_ERROR_MSG_FAILED)
 
 

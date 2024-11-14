@@ -261,7 +261,7 @@ async def download_csv(startDt: str, endDt: str, testMode: str = None, tgId: str
 
 @router.post("/api/address/download")
 @check_login()
-async def download_csv(request: Request, download_param: DownloadModel):
+async def api_download_csv(request: Request, download_param: DownloadModel):
     token = request.headers['TOKEN']
     start_result = await validate_datetime_format(download_param.startDt)
     end_result = await validate_datetime_format(download_param.endDt)
