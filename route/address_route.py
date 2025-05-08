@@ -79,14 +79,17 @@ async def report_address(json_data: InputModel):
     await cda_address_report_dao.inserts_cda_address_report(
         make_cda_address_report_data(json_data.data, last_inserted_id, cda_user.organization, json_data.testMode))
 
-    char_member_result = https_util.get_telegram_chat_member(send_message_token[json_data.testMode]["token"],
-                                                             send_message_token[json_data.testMode]["chat_id"],
-                                                             cda_user.connect_id)
+    chat_ids = send_message_token[json_data.testMode]["chat_ids"]
     tg_user_name = ""
-    if char_member_result is not None:
-        if char_member_result['result'] is not None and char_member_result['result']['user'] is not None and \
-                char_member_result['result']['user']['username'] is not None:
-            tg_user_name = char_member_result['result']['user']['username']
+    for chat_id in chat_ids:
+        char_member_result = https_util.get_telegram_chat_member(send_message_token[json_data.testMode]["token"],
+                                                                 chat_id,
+                                                                 cda_user.connect_id)
+
+        if char_member_result is not None:
+            if char_member_result['result'] is not None and char_member_result['result']['user'] is not None and \
+                    char_member_result['result']['user']['username'] is not None:
+                tg_user_name = char_member_result['result']['user']['username']
 
     if len(tg_user_name) == 0:
         await lark_notice_util.make_error_notice("获取不到tg用户名字的数据" + json.dumps(char_member_result))
@@ -95,12 +98,17 @@ async def report_address(json_data: InputModel):
                                    cda_user.id, cda_user.organization,
                                    cda_user.nickname, tg_user_name)
 
-    result = https_util.send_telegram_message(send_message_token[json_data.testMode]["token"],
-                                              send_message_token[json_data.testMode]["chat_id"], message)
-    if result:
-        print("成功发送消息：", result)
-    else:
-        print("发送消息失败")
+    # 获取chat_id列表
+    chat_ids = send_message_token[json_data.testMode]["chat_ids"]
+
+    # 循环发送消息到每个chat_id
+    for chat_id in chat_ids:
+        result = https_util.send_telegram_message(send_message_token[json_data.testMode]["token"], chat_id, message)
+        if result:
+            print("成功发送消息到", chat_id)
+        else:
+            print("发送消息失败", chat_id)
+
     return suc_enc({})
 
 
