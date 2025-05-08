@@ -31,7 +31,7 @@ def send_telegram_message(bot_token, chat_id, message_text):
     elif response.status_code == 429:
         lark_notice_util.make_error_notice("Telegram API请求频率过高")
     else:
-        print(f"HTTP请求失败，状态码：{response.status_code}")
+        print(f"发送消息 HTTP请求失败，状态码：{response.status_code}")
         return None
 
 
@@ -55,7 +55,7 @@ def get_telegram_chat_member(bot_token, chat_id, user_id):
     elif response.status_code == 429:
         lark_notice_util.make_error_notice("Telegram API请求频率过高")
     else:
-        print(f"HTTP请求失败，状态码：{response.status_code}")
+        print(f"获取用户信息 HTTP请求失败，状态码：{response.status_code}")
         return None
 
 

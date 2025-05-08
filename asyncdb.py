@@ -333,6 +333,7 @@ async def __update_setting():
     while True:
         try:
             s = await get_list("settings")
+            print('update setting', s)
             for i in s:
                 setting[i["name"]] = i["value"]
             await asyncio.sleep(5)
