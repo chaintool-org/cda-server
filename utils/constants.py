@@ -13,6 +13,6 @@ send_message_token = json.loads(os.getenv('SEND_MESSAGE_TOKEN',
                                           '"test": {"token": "6719660314:AAHnyhfgS6An6Ff2RcjT679xPWLhgSXfseo",'
                                           ' "chat_ids": ["-1002111465087","-1002536630151"]},'
                                           '"prod": {"token": "6566268578:AAGc4sGBLHlIpCBBtUBCJDVu4fzP5IdhUeg", '
-                                          '"chat_ids": ["-1001280903433"],"tg_name":"@CDAReporterBot"} }'))
+                                          '"chat_ids": ["-1001280903433", "-1002622004671"],"tg_name":"@CDAReporterBot"} }'))
 
 
