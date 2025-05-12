@@ -1,16 +1,19 @@
 FROM python:3.9-slim
-#RUN mkdir /opt
+
+# setting working directory
 WORKDIR /opt/
+
+# setting port
 EXPOSE 8080
-# 将 requirements.txt 复制到 /opt/ 目录
+
+# copy requirements.txt and install dependencies
 COPY ["requirements.txt", "/opt/"]
 RUN pip3 install https://github.com/encode/requests-async/archive/refs/heads/master.tar.gz
 RUN pip3 install flask -r requirements.txt
-# 将其余文件复制到 /opt/ 目录
+
+# copy source code
 COPY [".", "/opt/"]
-#CMD   uvicorn server:app --port 8081 --host 0.0.0.0
-ENV ms.db.url mysql://root:W1PkWn2hfOAy@172.27.240.4:3306/cda_db?useSSL=false&useUnicode=true&characterEncoding=UTF-8
-ENV send.message.list ["dev", "test", "prod"]
-ENV send.message.token {"dev": {"token": "7853704896:AAHQyOHkUVUGTrlgn9dV8iPKdQXzq_4S23E", "chat_ids": ["-4539437068","-1002536630151"]},"test": {"token": "7853704896:AAHQyOHkUVUGTrlgn9dV8iPKdQXzq_4S23E", "chat_ids": ["-1002111465087","-1002536630151"]},"prod": {"token": "7853704896:AAHQyOHkUVUGTrlgn9dV8iPKdQXzq_4S23E", "chat_ids": ["-1001280903433", "-1002622004671"], "tg_name":"@CDAReporterBot"}}
+
+# run app
 CMD python3 -u server.py
 
