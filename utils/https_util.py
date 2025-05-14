@@ -9,11 +9,12 @@ from utils.constants import send_message_token
 tg_api_url = f"https://api.telegram.org/bot"
 
 
-def send_telegram_message(bot_token, chat_id, message_text):
+def send_telegram_message(bot_token, chat_id, message_text, thread_id=None):
     api_url = f"{tg_api_url}{bot_token}/sendMessage"
 
     # 构建请求体
     request_data = {
+        "message_thread_id": thread_id,
         "chat_id": chat_id,
         "text": message_text,
         "parse_mode": "HTML",
