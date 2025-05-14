@@ -81,7 +81,11 @@ async def report_address(json_data: InputModel):
 
     chat_ids = send_message_token[json_data.testMode]["chat_ids"]
     tg_user_name = ""
-    for chat_id in chat_ids:
+    for chat_id_raw in chat_ids:
+
+        # 分割chat_id_raw, chat_id_raw的格式为-1002536630151_123
+        chat = chat_id_raw.split("_")
+        chat_id = chat[0]
         char_member_result = https_util.get_telegram_chat_member(send_message_token[json_data.testMode]["token"],
                                                                  chat_id,
                                                                  cda_user.connect_id)
@@ -102,12 +106,17 @@ async def report_address(json_data: InputModel):
     chat_ids = send_message_token[json_data.testMode]["chat_ids"]
 
     # 循环发送消息到每个chat_id
-    for chat_id in chat_ids:
-        result = https_util.send_telegram_message(send_message_token[json_data.testMode]["token"], chat_id, message)
+    for chat_id_raw in chat_ids:
+        chat = chat_id_raw.split("_")
+        chat_id = chat[0]
+        thread_id = chat[1] if len(chat) > 1 else None
+        token = send_message_token[json_data.testMode]["token"]
+
+        result = https_util.send_telegram_message(token, chat_id, message, thread_id)
         if result:
-            print("成功发送消息到", chat_id)
+            print("成功发送消息到", chat_id_raw)
         else:
-            print("发送消息失败", chat_id)
+            print("发送消息失败", chat_id_raw)
 
     return suc_enc({})
 
