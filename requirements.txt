@@ -11,7 +11,7 @@ aioredis~=2.0.0
 aliyun-python-sdk-core-v3
 aiomysql~=0.0.21
 cacheout~=0.13.1
-requests-async~=0.6.2
+# requests-async~=0.6.2
 python-multipart
 pydantic~=1.8.2
 pytest~=6.2.5
