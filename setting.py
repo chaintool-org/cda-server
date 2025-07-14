@@ -10,7 +10,8 @@ from json import JSONEncoder
 
 dbUrl = os.getenv(
     "DB_URL",
-    "mysql://user:password@host:3306/cda_db?charset=utf8mb4&maxsize=20")
+    "mysql://codatta:W1PkWn2hfOAy@codatta-test.rwlb.singapore.rds.aliyuncs.com:3306/cda_db?charset=utf8mb4&maxsize=20"
+)
 
 cookie_key = "asdfasfsdsadfasdfasdfi67uty"
 

@@ -24,9 +24,7 @@ async def get_cda_by_tg_id(tgId: str = None):
             'cdaId': cda_user.id
         })
     if not cda_user:
-        return suc_enc({
-            'orgs': await get_all_valid_organizations()
-        })
+        return suc_enc({'orgs': await get_all_valid_organizations()})
 
 
 @router.post("/user/tg/connect")
@@ -49,5 +47,4 @@ async def connect_tg(tgId: str = None, org: str = None, nickname: str = None):
         return suc_enc({
             'cdaId': cda_user.id
         })
-    raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL,
-                            TG_USER_NOT_REGISTERED)
+    raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, TG_USER_NOT_REGISTERED)

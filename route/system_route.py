@@ -10,13 +10,12 @@ from dao.user_api_token_dao import get_by_user_id, save_token, update_status, up
 from framework import errorcode
 from framework.exceptions import BusinessException
 from framework.result_enc import suc_enc
-from models.system_change_model import OrgEntity, NetworkEntity, NameEntity, UserQueryEntity, UserSaveEntity, \
-    UserUpdateEntity, UserApiTokenEntity, UserTokenUpdateEntity, UserTokenResetEntity
+from models.system_change_model import NetworkQueryEntity, OrgEntity, NetworkEntity, NameEntity, OrgQueryEntity, OrgUpdateEntity, UserAddEntity, UserQueryEntity, UserSaveEntity, \
+    UserUpdateEntity, UserApiTokenEntity, UserTokenUpdateEntity, UserTokenResetEntity, UserUpdateInfoEntity
 from utils import parameter_check
 from utils.constants import CONNECT_TYPE_TELEGRAM
 
 router = APIRouter()
-
 
 @router.post("/org/add")
 @transaction
@@ -33,6 +32,31 @@ async def add_org(data: OrgEntity):
         'data': "添加成功👌"
     })
 
+@router.post("/org/list/valid")
+async def get_valid_org_list():
+    return suc_enc({'data': await cda_organization_dao.get_all_valid_organizations()})
+
+@router.post("/org/list")
+async def get_org_list(query: OrgQueryEntity):
+    page = query.page if query.page is not None else 1
+    page_size = query.page_size if query.page_size is not None else 20
+    org_list_data = await cda_organization_dao.get_organization_list(query.name, query.status, page, page_size)
+    total = org_list_data.get('total')
+    data = org_list_data.get('data')
+    page = org_list_data.get('page')
+    page_size = org_list_data.get('page_size')
+    return suc_enc({
+        'data': data,
+        'total': total,
+        'page': page,
+        'page_size': page_size
+    })
+
+@router.post("/org/update/{id}")
+async def update_org(id: int, query: OrgUpdateEntity):
+    await cda_organization_dao.update_organization(id, query.org, query.status)
+    return suc_enc()
+
 
 @router.post("/org/delete")
 @transaction
@@ -45,8 +69,29 @@ async def add_org(data: OrgEntity):
     # 删除org
     await cda_organization_dao.delete_organizations(data.org)
 
+    return suc_enc({'data': "delete success"})
+
+
+@router.post("/network/list/valid")
+async def get_network_list():
+    network_list_data = await cda_network_dao.get_all_valid_networks()
+    return suc_enc({'data': network_list_data})
+
+
+@router.post("/network/list")
+async def get_network_list(query: NetworkQueryEntity):
+    page = query.page if query.page is not None else 1
+    page_size = query.page_size if query.page_size is not None else 20
+    network_list_data = await cda_network_dao.get_network_list(query.network, page, page_size)
+    total = network_list_data.get('total')
+    data = network_list_data.get('data')
+    page = network_list_data.get('page')
+    page_size = network_list_data.get('page_size')
     return suc_enc({
-        'data': "删除成功👌"
+        'data': data,
+        'total': total,
+        'page': page,
+        'page_size': page_size
     })
 
 
@@ -60,25 +105,34 @@ async def add_org(data: NetworkEntity):
     await network_change_history.add_history(data, 0)
     # 添加network
     await cda_network_dao.add_network(data.network)
-    return suc_enc({
-        'data': "添加成功👌"
-    })
+    return suc_enc({'data': "添加成功👌"})
 
 
-@router.post("/network/delete")
+@router.post("/network/delete/{id}")
 @transaction
-async def add_org(data: NetworkEntity):
-    cda_network = await cda_network_dao.lock_network(data.network)
+async def add_org(id: int, data: NetworkEntity):
+    cda_network = await cda_network_dao.get_network_by_id(id)
     if cda_network is None:
         raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, "This network does not exist")
     # 添加操作记录
     await network_change_history.add_history(data, 1)
     # 删除network
-    await cda_network_dao.delete_network(data.network)
+    await cda_network_dao.delete_network(cda_network)
 
-    return suc_enc({
-        'data': "删除成功👌"
-    })
+    return suc_enc({'data': "删除成功"})
+
+@router.post("/network/enable/{id}")
+@transaction
+async def enable_network(id: int, data: NetworkEntity):
+    cda_network = await cda_network_dao.get_network_by_id(id)
+    if cda_network is None:
+        raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, "This network does not exist")
+    # 添加操作记录
+    await network_change_history.add_history(data, 1)
+    # 删除network
+    await cda_network_dao.enable_network(cda_network)
+
+    return suc_enc({'data': "启用成功"})
 
 
 @router.post("/download/data/get")
@@ -93,13 +147,20 @@ async def get_download_data(query_data: NameEntity):
         'data': cda_user_msg
     })
 
-
 @router.post("/user/list")
-async def get_user_list(query_data: UserQueryEntity):
-    return suc_enc({
-        'data': await cda_user_dao.list_user()
-    })
+async def get_user_list(query: UserQueryEntity):
+    user_list_data = await cda_user_dao.list_user(query.user_name, query.page, query.page_size)
+    total = user_list_data.get('total')
+    data = user_list_data.get('data')
+    page = user_list_data.get('page')
+    page_size = user_list_data.get('page_size')
 
+    return suc_enc({
+        'data': data,
+        'total': total,
+        'page': page,
+        'page_size': page_size
+    })
 
 @router.post("/user/save")
 @transaction
@@ -112,6 +173,26 @@ async def update_user(query_data: UserSaveEntity):
         else:
             already_data.append(data['nickname'])
     return suc_enc({'data': already_data})
+
+
+@router.post("/user/add")
+@transaction
+async def add_user(params: UserAddEntity):
+
+    cda_user = await cda_user_dao.get_cda_user_by_user_name(CONNECT_TYPE_TELEGRAM, params.nickname)
+    if cda_user is not None:
+        raise BusinessException(errorcode.USER_HAS_BEEN_ADDED, "This user already exists")
+    
+    cda_user = await cda_user_dao.save_user(CONNECT_TYPE_TELEGRAM, params.nickname, params.organization)
+    return suc_enc({'data': cda_user})
+
+@router.post("/user/update/{user_id}")
+async def update_user(user_id: int, query_data: UserUpdateInfoEntity):
+    cda_user = await cda_user_dao.get_cda_user_by_id(CONNECT_TYPE_TELEGRAM, str(user_id))
+    if cda_user is None:
+        raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, "This user does not exist")
+    await cda_user_dao.update_user_by_user_id(user_id, query_data.nickname, query_data.organization, query_data.status)
+    return suc_enc()
 
 
 @router.post("/user/update")
