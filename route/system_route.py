@@ -202,7 +202,7 @@ async def upload_batch_address(query_data: AddressUploadBatchEntity):
 
 @router.post("/user/list")
 async def get_user_list(query: UserQueryEntity):
-    user_list_data = await cda_user_dao.list_user(query.user_name, query.page, query.page_size)
+    user_list_data = await cda_user_dao.list_user(query.nickname, query.page, query.page_size)
     total = user_list_data.get('total')
     data = user_list_data.get('data')
     page = user_list_data.get('page')
@@ -245,7 +245,7 @@ async def update_user(user_id: int, query_data: UserUpdateInfoEntity):
     if cda_user is None:
         raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, "This user does not exist")
     await cda_user_dao.update_user_by_user_id(user_id, query_data.nickname, query_data.organization, query_data.status)
-    return suc_enc()
+    return suc_enc({'data': "update success"})
 
 
 @router.post("/user/update")
