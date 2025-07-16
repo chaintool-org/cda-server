@@ -1,5 +1,5 @@
 import asyncdb
-from asyncdb import get_list, sql_to_dict
+from asyncdb import get_list, sql_to_dict, execute_sql
 from dao.models import CdaOrganization
 import asyncio
 
@@ -66,7 +66,8 @@ async def add_organization(organization: str):
     await cda_organization.save()
 
 async def update_organization(id:int,  organization: str, status: int):
-    await CdaOrganization.update(id, organization=organization, status=status)
+    sql = f'update {CdaOrganization.table_name()} set organization = %s, status = %s where id = %s'
+    await execute_sql(sql, organization, status, id)
 
 async def delete_organizations(organization: str):
     sql = f"update {CdaOrganization.table_name()} set status=1 where binary organization = %s"

@@ -1,19 +1,24 @@
+from datetime import datetime
 import json
 
 from fastapi import APIRouter
 
 from asyncdb import transaction
-from dao import cda_organization_dao, org_change_history, cda_network_dao, network_change_history, \
+from dao import cda_address_report_dao, cda_organization_dao, org_change_history, cda_network_dao, network_change_history, \
     cda_address_operation_dao, cda_user_dao
+from dao.models import CdaAddressOperation, CdaAddressReport
 from dao.token_change_history import add_history
 from dao.user_api_token_dao import get_by_user_id, save_token, update_status, update_token, list_user
 from framework import errorcode
 from framework.exceptions import BusinessException
 from framework.result_enc import suc_enc
-from models.system_change_model import NetworkQueryEntity, OrgEntity, NetworkEntity, NameEntity, OrgQueryEntity, OrgUpdateEntity, UserAddEntity, UserQueryEntity, UserSaveEntity, \
+from models.system_change_model import AddressUploadBatchEntity, NetworkQueryEntity, OrgEntity, NetworkEntity, NameEntity, OrgQueryEntity, OrgUpdateEntity, UserAddEntity, UserQueryEntity, UserSaveEntity, \
     UserUpdateEntity, UserApiTokenEntity, UserTokenUpdateEntity, UserTokenResetEntity, UserUpdateInfoEntity
+from route.address_route import make_cda_address_operation_data
 from utils import parameter_check
 from utils.constants import CONNECT_TYPE_TELEGRAM
+from utils.parameter_check import validate_param_in_list
+
 
 router = APIRouter()
 
@@ -54,8 +59,8 @@ async def get_org_list(query: OrgQueryEntity):
 
 @router.post("/org/update/{id}")
 async def update_org(id: int, query: OrgUpdateEntity):
-    await cda_organization_dao.update_organization(id, query.org, query.status)
-    return suc_enc()
+    await cda_organization_dao.update_organization(id, query.organization, query.status)
+    return suc_enc({'data': "update success"})
 
 
 @router.post("/org/delete")
@@ -146,6 +151,54 @@ async def get_download_data(query_data: NameEntity):
     return suc_enc({
         'data': cda_user_msg
     })
+
+@router.post("/address/report/batch")
+async def upload_batch_address(query_data: AddressUploadBatchEntity):
+    # check list network
+    networks = await cda_network_dao.get_all_valid_networks()
+    
+    # check network list
+    for item in query_data.data:
+        if not validate_param_in_list(item.network, networks):
+            raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'network not found')
+        
+        if not validate_param_in_list(item.public, [0, 1]):
+            raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'public value is not valid')
+        
+        if not validate_param_in_list(item.confidence, ['High', 'Medium', 'Low']):
+            raise BusinessException(errorcode.REQUEST_PARAM_ILLEGAL, 'confidence value is not valid')
+    
+    # 构建cda_address_operation数据
+    cda_address_operation = CdaAddressOperation()
+    cda_address_operation.gmt_create = datetime.now()
+    cda_address_operation.gmt_modified = datetime.now()
+    cda_address_operation.nickname = query_data.user_name
+    cda_address_operation.organization = 'SYSTEM'
+    cda_address_operation.action_type = 'SYSTEM_MULTI_UPLOAD'
+    cda_address_operation.data = json.dumps([item.dict() for item in query_data.data])
+    cda_address_operation.data_count = len(query_data.data)
+    last_inserted_id = await cda_address_operation_dao.save_cda_address_operation(cda_address_operation)
+
+
+    address_report_list = []
+    # 构建cda_address_report数据
+    for item in query_data.data:
+        cda_address_report = CdaAddressReport()
+        cda_address_report.operate_id = last_inserted_id
+        cda_address_report.address = item.address
+        cda_address_report.network = item.network
+        cda_address_report.category = item.category
+        cda_address_report.confidence = item.confidence
+        cda_address_report.source = item.source
+        cda_address_report.entity = item.entity
+        cda_address_report.is_public = item.public
+        cda_address_report.mode = 'prod'
+        cda_address_report.organization = 'SYSTEM'
+        address_report_list.append(cda_address_report)
+
+    await cda_address_report_dao.inserts_cda_address_report(address_report_list)
+
+    return suc_enc({'data': "上传成功"})
 
 @router.post("/user/list")
 async def get_user_list(query: UserQueryEntity):
