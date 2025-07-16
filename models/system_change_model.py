@@ -119,15 +119,15 @@ class AddressUploadBatchEntity(BaseModel):
 
 
 class UserQueryEntity(BaseModel):
-    user_name: Optional[str]
+    nickname: Optional[str]
     page: Optional[int]
     page_size: Optional[int]
 
-    @validator("user_name", pre=True, always=True)
-    def validate_user_name_non_empty(cls, value):
+    @validator("nickname", pre=True, always=True)
+    def validate_nickname_non_empty(cls, value):
         if value is None or value == "":
             return None
-        return validate_field_str(value, "user_name")
+        return validate_field_str(value, "nickname")
     
     @validator("page", pre=True, always=True)
     def validate_page_non_empty(cls, value):

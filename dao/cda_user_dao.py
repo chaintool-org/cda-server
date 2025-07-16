@@ -35,7 +35,7 @@ async def update_status(user_id: int, status: int):
     await execute_sql(sql)
 
 
-async def list_user(user_name: str, page: int, page_size: int):
+async def list_user(nickname: str, page: int, page_size: int):
     # 限制最大页数
     page_size = min(page_size, 100)
     offset = (page - 1) * page_size
@@ -47,24 +47,24 @@ async def list_user(user_name: str, page: int, page_size: int):
     
     # 构建WHERE条件（忽略大小写）
     where_clause = ""
-    if user_name:
+    if nickname:
         # 使用字符串拼接避免百分号问题
         where_clause = ' where LOWER(nickname) like LOWER(%s)'
-        like_param = f'%{user_name}%'
+        like_param = f'%{nickname}%'
         sql += where_clause
 
     final_sql = f'{sql} {sqlOrder} {sqlLimit}'
     print(final_sql)
     
     # 分别处理有参数和无参数的情况
-    if user_name:
+    if nickname:
         data = await sql_to_dict(final_sql, like_param)
     else:
         data = await sql_to_dict(final_sql)
 
     # 获取总页数（也要应用相同的过滤条件）
     total_sql = f'select count(*) as total from {CdaUser.table_name()}{where_clause}'
-    if user_name:
+    if nickname:
         totalData = await sql_to_dict(total_sql, like_param)
     else:
         totalData = await sql_to_dict(total_sql)
