@@ -68,6 +68,54 @@ class NameEntity(BaseModel):
     @validator("user_name", pre=True, always=True)
     def validate_user_name_non_empty(cls, value):
         return validate_field_str(value, "user_name")
+    
+
+class AddressUploadBatchDataEntity(BaseModel):
+    address: str
+    network: str
+    category: str
+    confidence: str
+    source: str
+    entity: str
+    public: int
+
+    @validator("address", pre=True, always=True)
+    def validate_address_non_empty(cls, value):
+        return validate_field_str(value, "address")
+    
+    @validator("network", pre=True, always=True)
+    def validate_network(cls, value):
+        return validate_field_str(value, "network")
+    
+    @validator("category", pre=True, always=True)
+    def validate_category(cls, value):
+        return validate_field_str(value, "category")
+    
+    @validator("confidence", pre=True, always=True)
+    def validate_confidence(cls, value):
+        return validate_field_str(value, "confidence")
+    
+    @validator("source", pre=True, always=True)
+    def validate_source(cls, value):
+        return validate_field_str(value, "source")
+    
+    @validator("entity", pre=True, always=True)
+    def validate_entity(cls, value):
+        return validate_field_str(value, "entity")
+    
+    
+
+class AddressUploadBatchEntity(BaseModel):
+    user_name: str
+    data: List[AddressUploadBatchDataEntity]
+
+    @validator("user_name", pre=True, always=True)
+    def validate_user_name_non_empty(cls, value):
+        return validate_field_str(value, "user_name")
+    
+    @validator("data", pre=True, always=True)
+    def validate_data_non_empty(cls, value):
+        return validate_field_list(value, "data")
 
 
 class UserQueryEntity(BaseModel):
